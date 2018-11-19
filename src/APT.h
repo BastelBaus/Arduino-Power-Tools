@@ -10,18 +10,23 @@
 /* permit persons to whom the Software is furnished to do so, subject to   */
 /* the following conditions: The above copyright notice and this           */
 /* permission notice shall be included in all copies or substantial        */
-/* portions of the Software.                               */
+/* portions of the Software.								               */
 /*                                                                         */
 /* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,         */
 /* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF      */
 /* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  */
 /* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY    */ 
 /* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 	   */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  */
 /***************************************************************************/
 
-bool MENU3_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-bool MENU4_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-bool MENU5_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-bool MENU6_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
+#ifndef __APT_H__
+#define __APT_H__
+
+// just include all single libraries
+#include <APT_Menu.h>
+#include <APT_Input.h>
+#include <APT_Debug.h>
+
+#endif // #ifndef __APT_H__

@@ -10,13 +10,34 @@
 /* permit persons to whom the Software is furnished to do so, subject to   */
 /* the following conditions: The above copyright notice and this           */
 /* permission notice shall be included in all copies or substantial        */
-/* portions of the Software.                               */
+/* portions of the Software.                                               */
 /*                                                                         */
 /* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,         */
 /* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF      */
 /* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  */
 /* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY    */ 
 /* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE       */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  */
 /***************************************************************************/
+
+#include <APT_SerialInput.h>
+#include <Arduino.h>
+
+APT_SerialInput::APT_SerialInput(void) {
+};
+
+APT_SerialInput::APT_SerialInput(functionHandlerType functionHandler) {
+  this->functionHandler = functionHandler;
+};
+
+void APT_SerialInput::attachHandler(functionHandlerType functionHandler) {
+  this->functionHandler = functionHandler;
+}
+
+
+void APT_SerialInput::loop(void) {
+  if ( (functionHandler != NULL) && (Serial.available() > 0) ) {
+    (*functionHandler) (Serial.read());
+  }
+} // char APT_SerialInput::loop(void) {

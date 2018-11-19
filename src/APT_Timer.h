@@ -26,7 +26,7 @@
 
 #include <Arduino.h>
 
-// This time can be used in two ways
+// This timer can be used in two ways
 //  1. Polling it manually to check if a given duration 
 //     has passed.
 //  2. Installing a callback which is called once the 
@@ -36,8 +36,8 @@
 // - The implementation uses the millis() function.
 // - Duration can be [0 4294967295] milliseconds (~49 days)
 
-// type of callback which is called once the Timer 
-// is over
+// type of callback which is called once the 
+// Timer is over
 typedef void (*timerCallbackFunctionType)(void);
 
 class APT_Timer {
@@ -50,52 +50,52 @@ class APT_Timer {
    // or paused, timer will be reseted and set to stop. No 
    // callback will be called. 
    void setDuration(unsigned long duration_ms);
-
-   #define APT_TIMER_REPEAT_FOREVER  0
-   // ToDo:
-   // By default the timer only runs once.
-   // if repetition euqals 0, the timer repeats
-   void setRepeatForever(uint8_t repetitions = APT_TIMER_REPEAT_FOREVER);
+  
    
    // Starts the timer time. If it is alread running, 
    // it is started from the beginning w/o calling a callback.
-   void start(void);
-   
-   // Set the duration of the timer and starts it. If it is 
-   // alread running, it is started from the beginning 
-   // w/o calling a callback.
-   void start(unsigned long duration_ms);
-   
+   // Repitions is the amount of repititions the timer will 
+   // run. 
+   // Set it to 0 (APT_TIMER_REPEAT_FOREVER) to let it 
+   // run unlimted repititions. Each time it passes its duration
+   // the callback will be called if not zero.
+   void start(uint16_t repititions = 1);
+   #define APT_TIMER_REPEAT_FOREVER  0
+
    // Stops the timer, no callback will be called
    void stop(void);
    
    // Checks if the timer is stopped. If it is over, it is stopped before.
    bool isStopped(void);
    
-   // Checks if teh timer is overrun. If so, it is stopped. A stoped 
+   // Checks if the timer is overrun. If so, it is stopped. A stopped 
    // timer is not overrun. So this fucntion returns only once true 
    // when the timer is overrund and not yet stopped.
+   // If the timer runs more than one repitition, it is only over if 
+   // the last repition is passed.
    bool isOver(void);
    
    // returns the remaining time in miliseconds
-   unsigned long getRemainingTime();
+   uint32_t  getRemainingTime();
    
    // returns the currently set duration 
-   unsigned long getDuration();
+   uint32_t  getDuration(void);
+   
+   uint16_t  getRemainingRepititions(void);
 
    // Set the callback which is called once the timer 
    // reaches his end. When the timer is over, it is stopped
-   void setCallback(timerCallbackFunctionType timerCallbackFunction);
+   void 	 setCallback(timerCallbackFunctionType timerCallbackFunction);
    
    // This function must be called within the main loop 
    // if the callback functionality is used.
    void loop(void);
    
   private:
-    unsigned long timerDuration_ms = 0; 
-    unsigned long startTime_ms;   
-    timerCallbackFunctionType timerCallbackFunction = NULL;
-    
+    unsigned long 				timerDuration_ms = 0; 
+    unsigned long 				startTime_ms;   
+    timerCallbackFunctionType 	timerCallbackFunction = NULL;
+    uint16_t					repititions;
 };
 
 

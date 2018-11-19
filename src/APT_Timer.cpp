@@ -45,25 +45,39 @@ unsigned long APT_Timer::getDuration() {
  return timerDuration_ms;
 }
    
-void APT_Timer::start() {
+void APT_Timer::start(uint16_t repititions) {
+  this->repititions = repititions;
   startTime_ms = millis();  
 }
 
 void APT_Timer::stop(void) {
-  startTime_ms = TIMER_STOP_VALUE;
+  
 }
 
 bool APT_Timer::isOver() {
-  if(startTime_ms == TIMER_STOP_VALUE) return false;
+  if(startTime_ms == TIMER_STOP_VALUE) 				return false;  
+  else if(repititions == APT_TIMER_REPEAT_FOREVER) 	return false; // #define APT_TIMER_REPEAT_FOREVER  0   
+  else if(repititions > 1) 						   	return false;  
   else if ( (millis() - startTime_ms) > timerDuration_ms ) {
-    stop(); 
+   	stop(); 
     return true;
   } else return false;
 }
 
 void APT_Timer::loop(void) {
-  if( isOver() ) (*timerCallbackFunction)();
-}
+  if(startTime_ms != TIMER_STOP_VALUE) {
+	uint32_t timeStamp = millis();
+	if ( ( timeStamp - startTime_ms) > timerDuration_ms ) {
+		if (timerCallbackFunction != NULL) (*timerCallbackFunction)();
+		if (repititions == 1)  startTime_ms = TIMER_STOP_VALUE; // stop the timer
+		else {
+			startTime_ms = timeStamp - ((timeStamp - startTime_ms ) - timerDuration_ms);
+			if(repititions>1)  repititions--;
+			// else // (repititions == APT_TIMER_REPEAT_FOREVER) ; // #define APT_TIMER_REPEAT_FOREVER  0   
+		}
+    }  
+  }
+} // void APT_Timer::loop(void) {
 
 bool APT_Timer::isStopped() {
   if(startTime_ms == TIMER_STOP_VALUE) return true;
@@ -83,4 +97,8 @@ unsigned long APT_Timer::getRemainingTime() {
   unsigned long timePassed_ms = (millis() - startTime_ms);
   if( timePassed_ms > timerDuration_ms ) return 0;
   return timerDuration_ms - timePassed_ms;
+}
+
+uint16_t  APT_Timer::getRemainingRepititions(void) {
+  return repititions;
 }

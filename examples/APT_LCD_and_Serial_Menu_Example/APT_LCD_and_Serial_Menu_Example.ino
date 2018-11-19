@@ -10,21 +10,20 @@
 /* permit persons to whom the Software is furnished to do so, subject to   */
 /* the following conditions: The above copyright notice and this           */
 /* permission notice shall be included in all copies or substantial        */
-/* portions of the Software.                               */
+/* portions of the Software.                                               */
 /*                                                                         */
 /* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,         */
 /* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF      */
 /* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  */
 /* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY    */ 
 /* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE       */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  */
 /***************************************************************************/
 
 
-// This example can be configured to a serial menu 
-// or an LCD menu. Uncomment one of the following to 
-// choose
+// This example can be configured to a serial menu or an LCD 
+// menu. Uncomment one of the following to choose:
 //#define   APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES
 #define   APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
 
@@ -35,26 +34,23 @@
 #include <APT_Menu.h>
 #include <APT_Input.h>
 #include <APT_Timer.h>
+#include <APT_SerialInput.h>
+#include "APT_menu_example_header.h"
+#include "APT_menu_example_functions_LCD.cpp"
+#include "APT_menu_example_functions_Serial.cpp"
 
-#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
-  #include "APT_menu_example_functions_LCD.h"
-#elif  APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES
-  #include "APT_menu_example_functions_Serial.cpp"
-#endif
 
 /***************************************************************************/
 /* General settings                                                        */
 /***************************************************************************/
 
-
-#define  PIN_BUTTON               A1 
 #define  PIN_ENC_BUTTON           4 
 #define  PIN_ENC_A                2 
 #define  PIN_ENC_B                3 
 
 #define  SCREEN_SAVER_TIME_MS  15000
 #define  ROW_COUNT             4
-#define  REBOOT()  { asm volatile ("  jmp 0"); }
+
 
 /***************************************************************************/
 /* Global variables for the menu items                                     */
@@ -64,92 +60,96 @@ bool      menu4_value = false;
 uint8_t   menu5_value = 0;
 uint8_t   menu6_value = 0;
 APT_Timer screenSaver(SCREEN_SAVER_TIME_MS);
-#define   SCREENSAVER_KEEPAWAKE() screenSaver.start() 
 
-
-bool MENU3_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-bool MENU4_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-bool MENU5_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-bool MENU6_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
 
 //***********************************************************//
 //* Initialize the menu                                     *//
 //***********************************************************//
 
-APT_Menu menu(ROW_COUNT);                               // define a global menu variable
-APT_MENUITEM_ADD     ( 1,  0,"Menu 1 (empty)");                       //
-APT_MENUITEM_ADD     ( 2,  0,"Menu 2 (sub)");
-APT_MENUITEM_ADD     ( 3,  2,"Menu 2.1");
-APT_MENUITEM_ADD     ( 4,  3,"Menu 2.1.1");
-APT_MENUITEM_ADD     ( 5,  4,"Menu 2.1.1.1");
-APT_MENUITEM_ADD     ( 6,  2,"Menu 2.2");
-APT_MENUITEM_ADDLEAF ( 7,  0,"Menu 3 (full)",   MENU3_callback);      
-APT_MENUITEM_ADDLEAF ( 8,  0,"Menu 4 (bool):",  MENU4_callback);
-APT_MENUITEM_ADDLEAF ( 9,  0,"Menu 5 (value):", MENU5_callback);
-APT_MENUITEM_ADDLEAF (10,  0,"Menu 6 (auto):",  MENU6_callback);
-#define APT_MENU_COUNT 10
+// prototypes of the differnt callbacks for the menu
+bool MENU3_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
+bool MENU4_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
+bool MENU5_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
+bool MENU6_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
 
-//***********************************************************//
-//* Initialize the buttons and encoders                     *//
-//***********************************************************//
-
-void functionEncoderDefault(APT_Encoder* encoder);
-void functionButtonDefault(uint8_t eventType);
-
-APT_Button  button1(PIN_BUTTON, APT_BUTTON_PROP_PULLUP | APT_BUTTON_PROP_INVERT );
-APT_Encoder encoder(PIN_ENC_A,PIN_ENC_B);
-APT_Button  encButton(PIN_ENC_BUTTON,  APT_BUTTON_PROP_INVERT );
-
-APT_ButtonEncoder buttonEncoder(PIN_ENC_A,PIN_ENC_B, PIN_ENC_BUTTON,  APT_BUTTON_PROP_INVERT );
-
-//void button1Function(uint8_t eventType) {
-//  switch ( eventType ) {
-//    case APT_BUTTON_EVENT_PRESSED           : Serial.println(F("pressed")); break; 
-//    case APT_BUTTON_EVENT_RELEASED          : Serial.println(F("released")); break; 
-//    case APT_BUTTON_EVENT_CLICKED           : Serial.println(F("clicked")); break; 
-//    case APT_BUTTON_EVENT_LONGPRESSED       : Serial.println(F("long pressed")); break; 
-//    case APT_BUTTON_EVENT_DOUBLELONGPRESSED : Serial.println(F("double long pressed")); break; 
-//    case APT_BUTTON_EVENT_DOUBLECLICKED     : Serial.println(F("double click")); break; 
-//    default                                 : Serial.println(F("ERROR unkown event type")); break; 
-//  }  
-//} // void attachHandler(button1Function(uint8_t eventType) {
-//
+APT_Menu menu(ROW_COUNT);                                             // define a global menu variable
+APT_MENUITEM_ADD     ( 1,  0,"Menu 1 (empty)");                       // A menu entry w/ content
+APT_MENUITEM_ADD     ( 2,  0,"Menu 2 (sub)");                         // A menu with sub menus.
+APT_MENUITEM_ADD     ( 3,  2,"Menu 2.1");                             // -"-
+APT_MENUITEM_ADD     ( 4,  3,"Menu 2.1.1");                           // -"-
+APT_MENUITEM_ADD     ( 5,  4,"Menu 2.1.1.1");                         // -"-
+APT_MENUITEM_ADD     ( 6,  2,"Menu 2.2");                             // -"-
+APT_MENUITEM_ADDLEAF ( 7,  0,"Menu 3 (full)",   MENU3_callback);      // A full menu showing some text.
+APT_MENUITEM_ADDLEAF ( 8,  0,"Menu 4 (bool):",  MENU4_callback);      // A menu wich toggles a value on enter.
+APT_MENUITEM_ADDLEAF ( 9,  0,"Menu 5 (value):", MENU5_callback);      // A menu with adjustable value.
+APT_MENUITEM_ADDLEAF (10,  0,"Menu 6 (auto):",  MENU6_callback);      // A menu with automatic updated value.
+#define APT_MENU_COUNT 10                                             // Number of menu entries
 
 
+#if  defined(APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES)
+  //***********************************************************//
+  //* Initialize LCD, button and encoder                      *//
+  //***********************************************************//
+
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wuninitialized"
+  #include <LiquidCrystal_I2C.h>       // Library for I2C LCD
+  #pragma GCC diagnostic pop
+  extern LiquidCrystal_I2C  lcd;
+
+  // prototype for the default handlers
+  void functionEncoderDefault(APT_Encoder* encoder);
+  void functionButtonDefault(uint8_t eventType);
+
+  APT_ButtonEncoder inputHandler(PIN_ENC_A,PIN_ENC_B, PIN_ENC_BUTTON,  APT_BUTTON_PROP_INVERT );
+
+#elif  defined(APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES)
+  //***********************************************************//
+  //* Initialize Serial input handler                         *//
+  //***********************************************************//
+
+  // prototype for the default handler
+  void functionSerialCommandDefault(const char command);
+    
+  APT_SerialInput inputHandler;
+
+#endif
+    
 //***********************************************************//
 //* Main setup function                                     *//
 //***********************************************************//
 
 void setup() {
 
+  // used for debugging
   Serial.begin(115200);
-
   
+  // Initialization of the menu
   APT_MENU_SETUP(menu, APT_MENU_COUNT );
-  menu.setWrapAround(true);
+  // Configure menu, jump back to first line when end is reached
+  menu.setWrapAround(false);   
+  
 
-#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
+#if   defined(APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES)
+  // Initialization example for an LCD menu with encoder
   APT_DefaultLCDMenu_init();
   menu.setDefaultShowEntryFunction( APT_DefaultLCDMenu_showMenuItem );
   menu.setClearFunction( APT_DefaultLCDMenu_clear );
-  buttonEncoder.APT_Button::attachHandler(functionButtonDefault);
-  buttonEncoder.APT_Encoder::attachHandler(functionEncoderDefault,4); // each 4 ticks a "Raster"
- 
-#elif  APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES
+  inputHandler.APT_Button::attachHandler(functionButtonDefault);
+  inputHandler.APT_Encoder::attachHandler(functionEncoderDefault,4); // each 4 ticks a notch
+
+#elif  defined(APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES)
+  // Initialization example for a serial interfae menu
   menu.setDefaultShowEntryFunction( APT_DefaultSerialMenu_showMenuItem );
   menu.setClearFunction( APT_DefaultSerialMenu_clearMenu, APT_DefaultSerialMenu_clearLine );
+  inputHandler.attachHandler(functionSerialCommandDefault);
 
-#endif
+#endif // defined(APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES)
 
+  // start the screensaver
   screenSaver.start();
 }
 
-
-
-#include <LiquidCrystal_I2C.h>       // Library for I2C LCD
-extern LiquidCrystal_I2C  lcd;
-
-uint8_t key = ' ';
 
 //***********************************************************//
 //* Main loop                                               *//
@@ -162,9 +162,11 @@ void loop() {
   menu6_value++; 
 
   // Call loop function of all classes
-  buttonEncoder.loop();
+  inputHandler.loop();
   menu.loop();
+  
 
+#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
 
   // Screensaver: If the timer is overrun, turn off 
   // the menu and the backlight. If somebody re-started 
@@ -180,40 +182,7 @@ void loop() {
       screenOff = false;
       lcd.backlight();
   }
+#elif  defined(APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES)
+#endif
 
-
-      
-  #if  APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES
-    if (Serial.available() > 0) {
-      uint8_t key = Serial.read();
-      APT_MenuItem* activeMenuItem = menu.getActiveMenuItem();
-      if( activeMenuItem != NULL ) {      
-        switch( activeMenuItem->getID() ) {
-          case 9:   // value MenuItem
-                    switch(key) {
-                      case 's' : menu5_value++;
-                               menu.forceUpdate(activeMenuItem);
-                               break;
-                    case 'w' : menu5_value--;
-                               menu.forceUpdate(activeMenuItem);
-                               break;
-                    default: ;
-                  };
-                  break;
-        default:  ;
-      }
-      }
-      // no else, so process menu key's in any case
-      switch(key) {
-        case 'w': menu.goUp();  screenSaver.start();break;
-        case 's': menu.goDown(); screenSaver.start();break;
-        case 'e': menu.goInto(); screenSaver.start();break;
-        case 'q': menu.goBack(); screenSaver.start();break;
-        case 'p': REBOOT(); break; // SW reset      
-        case 10 : case 13: break;
-        default: Serial.print("Unknown command: "); Serial.println((char) key);
-      }
-   }
-  #endif
-  
 } // void loop();

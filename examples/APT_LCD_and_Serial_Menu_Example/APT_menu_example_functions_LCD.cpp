@@ -21,11 +21,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  */
 /***************************************************************************/
 
+#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #include <LiquidCrystal_I2C.h>       // Library for I2C LCD
+#pragma GCC diagnostic pop
 extern LiquidCrystal_I2C   lcd;
+
 #include <APT_menu.h>
 #include <APT_Timer.h>
 #include <APT_Input.h>
+#include "APT_menu_example_header.h"
 
 #define APT_EXAMPLE_LCD_COLUMNS    20
 
@@ -34,11 +41,9 @@ extern uint8_t           menu5_value;
 extern uint8_t           menu6_value;
 extern APT_Menu          menu;
 extern APT_Timer         screenSaver;
-extern APT_Button        encButton;
-extern APT_ButtonEncoder buttonEncoder;
 
-#define  SCREENSAVER_KEEPAWAKE() screenSaver.start() 
-#define  REBOOT()  { asm volatile ("  jmp 0"); }
+extern APT_ButtonEncoder inputHandler;
+
 
 void functionButtonDefault(uint8_t eventType) {
   SCREENSAVER_KEEPAWAKE(); 
@@ -76,7 +81,7 @@ void functionEncoderMenu5(APT_Encoder* encoder) {
   if(ticks !=0) {
      SCREENSAVER_KEEPAWAKE();
      menu5_value -= ticks;
-     menu.forceUpdate(true);
+     menu.forceUpdate(true); // update at least the current menu line
   }
 }
 
@@ -113,11 +118,11 @@ bool MENU6_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
 bool MENU5_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
  switch ( APT_CLB_GETCONDITION(callbackType) ) {
   case APT_CLB_ISFULLMENUITEM:  return false;
-  case APT_CLB_ONEXIT:          buttonEncoder.APT_Encoder::attachHandler( functionEncoderDefault, 4 );
-                                buttonEncoder.APT_Button::attachHandler(  functionButtonDefault );
+  case APT_CLB_ONEXIT:          inputHandler.APT_Encoder::attachHandler( functionEncoderDefault, 4 );
+                                inputHandler.APT_Button::attachHandler(  functionButtonDefault );
                                 return true; 
-  case APT_CLB_ONENTER:         buttonEncoder.APT_Encoder::attachHandler( functionEncoderMenu5, 4 );
-                                buttonEncoder.APT_Button::attachHandler(  functionButtonMenu5 );
+  case APT_CLB_ONENTER:         inputHandler.APT_Encoder::attachHandler( functionEncoderMenu5, 4 );
+                                inputHandler.APT_Button::attachHandler(  functionButtonMenu5 );
                                 return true; // true, since can be activated
   case APT_CLB_ONCURSORUPDATE:  
   case APT_CLB_ONUPDATE_LINE:   lcd.setCursor(0,line);
@@ -162,9 +167,9 @@ bool MENU4_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
 bool MENU3_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
  switch ( APT_CLB_GETCONDITION(callbackType) ) {
   case APT_CLB_ISFULLMENUITEM:  return true;
-  case APT_CLB_ONEXIT:          buttonEncoder.APT_Button::attachHandler(functionButtonDefault); 
+  case APT_CLB_ONEXIT:          inputHandler.APT_Button::attachHandler(functionButtonDefault); 
                                 break;                                              
-  case APT_CLB_ONENTER:         buttonEncoder.APT_Button::attachHandler(functionButtonMenu3); 
+  case APT_CLB_ONENTER:         inputHandler.APT_Button::attachHandler(functionButtonMenu3); 
                                 return true; // yes we can go inside the function ToDo: do we need it ?
   case APT_CLB_ONCURSORUPDATE:  
   case APT_CLB_ONUPDATE_LINE:   if ( APT_CLB_ISACTIVEATED(callbackType) ) {
@@ -177,3 +182,6 @@ bool MENU3_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
  };
  return false;
 }
+
+
+#endif // #ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES

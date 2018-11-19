@@ -230,9 +230,17 @@ void APT_Menu::loop() {
   return;
 }
 
-void APT_Menu::setWrapAround(bool wrapAround) {
-  (wrapAround ? bitSet(configuration, APT_MENU_CONFIG_BIT_WRAP_AROUND) : bitClear(configuration, APT_MENU_CONFIG_BIT_WRAP_AROUND));
+void APT_Menu::setWrapAround(const bool continuously) {
+  bitSet(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND);
+  if( continuously) bitSet(  configuration, APT_MENU_CONFIG_BIT_SCROLL_CONTINUOUS);
+  else 				bitClear(configuration, APT_MENU_CONFIG_BIT_SCROLL_CONTINUOUS);
 }
+  
+void APT_Menu::setNoWrapAround(void) {
+	bitClear(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND);
+	bitClear(configuration, APT_MENU_CONFIG_BIT_SCROLL_CONTINUOUS);
+}
+
 
 void APT_Menu::turnOff(const bool doClear) {
   if ( doClear ) clearMenu(); 
@@ -262,7 +270,7 @@ void APT_Menu::goUp() {
 
   // first menu item in layer
   if ( (cursorPosition + scrollPosition) == 0 ) {
-    if ( bitRead(configuration, APT_MENU_CONFIG_BIT_WRAP_AROUND) ) {
+    if ( bitRead(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND) ) {
       // wrap around
       cursorPosition = min(displayLines, entries) - 1;
       scrollPosition = (entries - cursorPosition) - 1;
@@ -292,7 +300,7 @@ void APT_Menu::goDown() {
 
   // last menu item in layer
   if ( (cursorPosition + scrollPosition) == (entries - 1) ) {
-    if ( bitRead(configuration, APT_MENU_CONFIG_BIT_WRAP_AROUND) ) {
+    if ( bitRead(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND) ) {
       // wrap around
       cursorPosition = 0;
       scrollPosition = 0;

@@ -171,8 +171,9 @@ class APT_Menu {
     //               at the beginning.
     // None:         Menu end scroll at the beginning and end
     //               of the menu entires. 
-    void setWrapAround(bool wrapAround);
-    
+    void setWrapAround(const bool continuously=false);
+    void setNoWrapAround(void);
+	
     //uint8_t getCurrentID();
     //APT_MenuItem* getCurrentMenuItem();
 
@@ -214,10 +215,16 @@ class APT_Menu {
       defaultShowEntryFunctionType  defaultShowEntryFunction = NULL;
 
       uint8_t configuration;
-      #define APT_MENU_CONFIG_BIT_WRAP_AROUND          0
-      #define APT_MENU_CONFIG_BIT_SCROLLBAR            1
-      #define APT_MENU_CONFIG_BIT_SCROLLBAR_AUTOOOF    2
-      #define APT_MENU_CONFIG_BIT_MENU_OFF             3
+      #define APT_MENU_CONFIG_BIT_SCROLLBAR            0    // 
+      #define APT_MENU_CONFIG_BIT_MENU_OFF             1    // If activated, turn menu off.
+      #define APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND    2	// If activated, menu will start from 
+	                                                        // first entry in first menu line if 
+															// goDown() is called.
+      #define APT_MENU_CONFIG_BIT_SCROLL_CONTINUOUS    3	// Only when APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND
+															// is activated: cursor will not jump at 
+                                                            // position 0 but menu will continuously be 
+															// appended at the end.
+      #define APT_MENU_CONFIG_BIT_AUTOBACKITEM         4    // A
       
       uint8_t status;
       #define APT_MENU_STATUS_BIT_NEEDFULLUPDATE       0
@@ -313,13 +320,15 @@ class APT_Menu {
 //                   (Starting form 0)
 // returns:          Meaning is given in below defires. If no meaning
 //                   specified should always return false to be future proove
-typedef bool (*clbFunctionType)(APT_Menu* menu, APT_MenuItem* entry,const uint8_t callbackType, uint8_t line);
+typedef bool (*clbFunctionType)(APT_Menu* 		menu, 
+								APT_MenuItem* 	entry,
+								const uint8_t 	callbackType, 
+								uint8_t 		line);
 
 #define APT_CLB_ISFULLMENUITEM     0  // should returns true if full MenuItem
                                       // and false if line MenuItem 
 #define APT_CLB_CHECKIFHIDDEN      1  // return true if the MenuItem should be hidden
 #define APT_CLB_DONEEDUPDATE       2  // return true if a update is needed, else false
- 
 #define APT_CLB_ONENTER            3  // enter from lower level, if called on a
                                       // a leaf element, return true if it can be
                                       // activated, else false
@@ -327,19 +336,21 @@ typedef bool (*clbFunctionType)(APT_Menu* menu, APT_MenuItem* entry,const uint8_
 #define APT_CLB_ONEXIT             5  // if an active menu item goes back or 
                                       // if returned from MenuItem
 #define APT_CLB_ONGOHIGHER         6  // enter one higher lever 
-#define APT_CLB_ONTIMER            7
+#define APT_CLB_ONTIMER            7  
 #define APT_CLB_ONLOOP             8
 
-// When the menu needs display updates, one of teh following
+// When the menu needs display updates, one of the following
 // messages is sent. A line which needs a definitve update 
-// receives APT_CLB_ONUPDATE_LINE if it is activated. Lines which 
-// would not necessarily need an update receives 
+// receives APT_CLB_ONUPDATE_LINE if it is activated. Lines 
+// which would not necessarily need an update receives 
 // APT_CLB_ONUPDATE_OTHERLINE (can be used if no single
 // line updates are possible and always the full menu needs to 
 // be updated). APT_CLB_ONCURSORUPDATE is received if only the 
 // scrollbar and cursor would need an update
 #define APT_CLB_ONUPDATE_LINE         10  // content, cursor and scrollbar
-#define APT_CLB_ONUPDATE_OTHERLINE    11  // content, cursor and scrollbar
+                                          // of this line needs update
+#define APT_CLB_ONUPDATE_OTHERLINE    11  // content, cursor and scrollbar 
+                                          // of another entry is updated
 #define APT_CLB_ONCURSORUPDATE        12  // only update the cursor and scrollbar
 
 // use these functions to decode only the reason of the callback
