@@ -22,7 +22,7 @@
 /***************************************************************************/
 
 #include <Arduino.h>
-#include <Encoder.h>      // https://github.com/PaulStoffregen/Encoder
+//#include <Encoder.h>      // https://github.com/PaulStoffregen/Encoder
 #include "APT_input.h"
 
 
@@ -69,7 +69,7 @@ void APT_Encoder::attachHandler(encoderHandlerType encoderHandler, uint16_t call
 
 void APT_Encoder::loop(void) {
   if(encoderHandler != NULL) {
-    if       (callAtAmountOfTicks == 0)           (*encoderHandler)(this);
+	if       (callAtAmountOfTicks == 0)           (*encoderHandler)(this);
     else if  (callAtAmountOfTicks <= abs(read())) (*encoderHandler)(this);
   }
 } // void APT_Encoder::loop(void) {
@@ -144,7 +144,7 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
                 state = 0;  
               } else if( (timeStamp - timeMemory1) > debounceTime_ms ) {
                 state = 2;
-                (*handlerFunction)(APT_BUTTON_EVENT_PRESSED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_PRESSED);
               }
               break;
     case 2:   // button pressed, wait for long press or release
@@ -153,7 +153,7 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
                 timeMemory2 = timeStamp;
               } else if( (timeStamp - timeMemory1) > longPressTime_ms ) { // toDO 1 ort 2 
                 state = 10;
-                (*handlerFunction)(APT_BUTTON_EVENT_LONGPRESSED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_LONGPRESSED);
               } // if(!buttonPushed) { ... } else {
               break;
     case 3:   // button released to first time 
@@ -162,21 +162,21 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
               } else if ( (timeStamp - timeMemory2) > debounceTime_ms ) { // and not just bouncing
                   state = 4;
                   timeMemory2 = timeStamp;
-                  (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
+                  if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
               }
               break;
     case 4:   if(buttonPushed) {  // pushed again
                   state = 5;
                   timeMemory2 = timeStamp;
               } else if ( (timeStamp - timeMemory2) > doubleClickTime_ms  ) { 
-                (*handlerFunction)(APT_BUTTON_EVENT_CLICKED);
+                 if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_CLICKED);
                  state = 0;
               }
               break;
     case 5:   if(!buttonPushed) {  // pushed again
                   state = 4;
               } else if ( (timeStamp - timeMemory1) >  debounceTime_ms  ) { 
-                (*handlerFunction)(APT_BUTTON_EVENT_PRESSED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_PRESSED);
                 state = 6;
               }
               break;   
@@ -184,15 +184,15 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
                   state = 7;
                   timeMemory2 = timeStamp;
               } else if ( (timeStamp - timeMemory1) >  longPressTime_ms   ) { 
-                (*handlerFunction)(APT_BUTTON_EVENT_DOUBLELONGPRESSED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_DOUBLELONGPRESSED);
                 state = 8;
               }
               break;                   
     case 7:   if(buttonPushed) {  // pushed again
                 state = 6;
               } else if ( (timeStamp - timeMemory2) >  debounceTime_ms  ) { 
-                (*handlerFunction)(APT_BUTTON_EVENT_DOUBLECLICKED);
-                (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_DOUBLECLICKED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
                 state = 0;
               }
               break;            
@@ -204,8 +204,8 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
     case 9:   if(buttonPushed) {  // pushed again
                   state = 8;
               } else if ( (timeStamp - timeMemory2) >  debounceTime_ms  ) { 
-                (*handlerFunction)(APT_BUTTON_EVENT_DOUBLELONGCLICKED);
-                (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_DOUBLELONGCLICKED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
                 state = 0;
               }
               break;                            
@@ -217,8 +217,8 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
     case 11:  if(buttonPushed) {  // pushed again
                   state = 10;
               } else if ( (timeStamp - timeMemory1) >  debounceTime_ms  ) { 
-                (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
-                (*handlerFunction)(APT_BUTTON_EVENT_LONGCLICKED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_RELEASED);
+                if(handlerFunction !=NULL) (*handlerFunction)(APT_BUTTON_EVENT_LONGCLICKED);
                 state = 0;
               }
               break;                            
@@ -229,7 +229,7 @@ void APT_Button::advanceStateMachine(bool buttonPushed) {
 
 
 
-APT_ButtonEncoder::APT_ButtonEncoder(uint8_t encPin1,uint8_t encPin2,uint8_t buttonPin, uint8_t properties = 0 ) 
+APT_ButtonEncoder::APT_ButtonEncoder(uint8_t encPin1,uint8_t encPin2,uint8_t buttonPin, uint8_t properties) 
 : APT_Button(buttonPin,properties), APT_Encoder(encPin1, encPin2)  {}
 
 void APT_ButtonEncoder::loop() {

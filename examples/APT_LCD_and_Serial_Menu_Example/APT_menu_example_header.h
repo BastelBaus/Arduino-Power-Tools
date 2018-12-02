@@ -27,5 +27,7 @@
   #define  SCREENSAVER_KEEPAWAKE() screenSaver.start() 
   #define  REBOOT()  { asm volatile ("  jmp 0"); }
 
+  APT_MENU_EXTERNAL(14);
+
 
 #endif

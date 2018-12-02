@@ -48,12 +48,43 @@
 // - screen saver
 // - default Back item :-)
 // - make functions static inside class
-
+// - toDO: delete childs ??
 // document if more than one line needs update, alwways the full display is updated
+// - dynamically added and delteded menu Items
+// DoNeed Updte --> Callback "loop"
+// Full Menu Item by config and not by callback ?? or alternative: hiffen by callback (no gut idea due to dynamics !)
+
 
 #include <Arduino.h>
 
  
+#define REPEAT_ADDCHILD_37  REPEAT_ADDCHILD_36  APT_MENU_ADDCHILD_37_func(); 
+#define REPEAT_ADDCHILD_36  REPEAT_ADDCHILD_35  APT_MENU_ADDCHILD_36_func(); 
+#define REPEAT_ADDCHILD_35  REPEAT_ADDCHILD_34  APT_MENU_ADDCHILD_35_func(); 
+#define REPEAT_ADDCHILD_34  REPEAT_ADDCHILD_33  APT_MENU_ADDCHILD_34_func(); 
+#define REPEAT_ADDCHILD_33  REPEAT_ADDCHILD_32  APT_MENU_ADDCHILD_33_func(); 
+#define REPEAT_ADDCHILD_32  REPEAT_ADDCHILD_31  APT_MENU_ADDCHILD_32_func(); 
+#define REPEAT_ADDCHILD_31  REPEAT_ADDCHILD_30  APT_MENU_ADDCHILD_31_func(); 
+#define REPEAT_ADDCHILD_30  REPEAT_ADDCHILD_29  APT_MENU_ADDCHILD_30_func(); 
+#define REPEAT_ADDCHILD_29  REPEAT_ADDCHILD_28  APT_MENU_ADDCHILD_29_func(); 
+#define REPEAT_ADDCHILD_28  REPEAT_ADDCHILD_27  APT_MENU_ADDCHILD_28_func(); 
+#define REPEAT_ADDCHILD_27  REPEAT_ADDCHILD_26  APT_MENU_ADDCHILD_27_func(); 
+#define REPEAT_ADDCHILD_26  REPEAT_ADDCHILD_25  APT_MENU_ADDCHILD_26_func(); 
+#define REPEAT_ADDCHILD_25  REPEAT_ADDCHILD_24  APT_MENU_ADDCHILD_25_func(); 
+#define REPEAT_ADDCHILD_24  REPEAT_ADDCHILD_23  APT_MENU_ADDCHILD_24_func(); 
+#define REPEAT_ADDCHILD_23  REPEAT_ADDCHILD_22  APT_MENU_ADDCHILD_23_func(); 
+#define REPEAT_ADDCHILD_22  REPEAT_ADDCHILD_21  APT_MENU_ADDCHILD_22_func(); 
+#define REPEAT_ADDCHILD_21  REPEAT_ADDCHILD_20  APT_MENU_ADDCHILD_21_func(); 
+#define REPEAT_ADDCHILD_20  REPEAT_ADDCHILD_19  APT_MENU_ADDCHILD_20_func(); 
+#define REPEAT_ADDCHILD_19  REPEAT_ADDCHILD_18  APT_MENU_ADDCHILD_19_func(); 
+#define REPEAT_ADDCHILD_18  REPEAT_ADDCHILD_17  APT_MENU_ADDCHILD_18_func(); 
+#define REPEAT_ADDCHILD_17  REPEAT_ADDCHILD_16  APT_MENU_ADDCHILD_17_func(); 
+#define REPEAT_ADDCHILD_16  REPEAT_ADDCHILD_15  APT_MENU_ADDCHILD_16_func(); 
+#define REPEAT_ADDCHILD_15  REPEAT_ADDCHILD_14  APT_MENU_ADDCHILD_15_func(); 
+#define REPEAT_ADDCHILD_14  REPEAT_ADDCHILD_13  APT_MENU_ADDCHILD_14_func(); 
+#define REPEAT_ADDCHILD_13  REPEAT_ADDCHILD_12  APT_MENU_ADDCHILD_13_func(); 
+#define REPEAT_ADDCHILD_12  REPEAT_ADDCHILD_11  APT_MENU_ADDCHILD_12_func(); 
+
 #define REPEAT_ADDCHILD_11  REPEAT_ADDCHILD_10  APT_MENU_ADDCHILD_11_func(); 
 #define REPEAT_ADDCHILD_10  REPEAT_ADDCHILD_9   APT_MENU_ADDCHILD_10_func(); 
 #define REPEAT_ADDCHILD_9   REPEAT_ADDCHILD_8   APT_MENU_ADDCHILD_9_func(); 
@@ -78,9 +109,6 @@ class APT_MenuItem; // the class for each menu item
 
 #ifdef APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES
 
-// ToDo Docu
-extern char* scrollbarSerialCharacters[];
-
   // as clear just outputs a new header
   void APT_DefaultSerialMenu_clearLine(uint8_t line);
   void APT_DefaultSerialMenu_clearMenu();
@@ -89,22 +117,28 @@ extern char* scrollbarSerialCharacters[];
   // callbackType:    uses the same encoding as in the main 
   //                  function to encode if cursor is on line 
   //                  or item is selected
-  void APT_DefaultSerialMenu_showMenuItem(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
+  bool APT_DefaultSerialMenu_showMenuItem(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
 
   
 #endif
 
-#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
+//#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
+
+
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wuninitialized"
+  #include <LiquidCrystal_I2C.h>       	// Library for I2C LCD
+  #pragma GCC diagnostic pop
+  extern LiquidCrystal_I2C   lcd;		// lcd class must be defined in main program.
 
   // initialization
   void APT_DefaultLCDMenu_init();
   // as clear just outputs a new header
   void APT_DefaultLCDMenu_clear();
   // prints the menu entry name
-  void APT_DefaultLCDMenu_showMenuItem(APT_Menu* menu,APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
-  
-#endif
+  bool APT_DefaultLCDMenu_showMenuItem(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line);
 
+  //#endif
 
 
 // Setup function of menu.
@@ -112,10 +146,249 @@ extern char* scrollbarSerialCharacters[];
 // menuItemCount:  count of MenuItem elements
 #define APT_MENU_SETUP(menuVariable,menuItemCount) { menuVariable.setup(&APT_menuItem_1_class); APT_MENU_REPEAT_ADDCHILD(menuItemCount); }
 
+
+
+/********************************************************************/
+/** Callback handling                                              **/
+/********************************************************************/
+
+        
+#define APT_menuItem_0_class  APT_menuItem_1_class      // just to avoid compiler errors, will never be called
+
+// ToDo, make this shorter and combine it to one
+
+#define APT_MENUITEM_ADDLEAF(id,parent,content,clbFunction) \
+        const char APT_MENUITEM_ENRY ## id [] PROGMEM = { content }; \
+        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENRY ## id), clbFunction); \
+        inline void APT_MENU_ADDCHILD_ ## id ## _func() { if (id!=1) { (parent==0 ? \
+                APT_menuItem_1_class.addSibling(& APT_menuItem_ ## id ## _class ) : \
+                APT_menuItem_ ## parent ## _class.addChild(& APT_menuItem_ ## id ## _class ) ); } }; 
+
+#define APT_MENUITEM_ADD(id,parent,content) \
+        const char APT_MENUITEM_ENRY ## id [] PROGMEM = { content }; \
+        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENRY ## id)); \
+        inline void APT_MENU_ADDCHILD_ ## id ## _func() { if (id!=1) { (parent==0 ? \
+                APT_menuItem_1_class.addSibling(& APT_menuItem_ ## id ## _class ) : \
+                APT_menuItem_ ## parent ## _class.addChild(& APT_menuItem_ ## id ## _class ) ); } }; 
+
+
+//get pointer to ID, does not work with variables
+#define	APT_MENUITEM_POINTER(id) (&APT_menuItem_ ## id ## _class)
+#define APT_MENU_EXTERNAL(N) 	  APT_MENU_EXTERNAL_##N		
+
+#define APT_MENU_EXTERNAL_18      APT_MENU_EXTERNAL_17; extern APT_MenuItem APT_menuItem_18_class
+#define APT_MENU_EXTERNAL_17      APT_MENU_EXTERNAL_16; extern APT_MenuItem APT_menuItem_17_class
+#define APT_MENU_EXTERNAL_16      APT_MENU_EXTERNAL_15; extern APT_MenuItem APT_menuItem_16_class
+#define APT_MENU_EXTERNAL_15      APT_MENU_EXTERNAL_14; extern APT_MenuItem APT_menuItem_15_class
+#define APT_MENU_EXTERNAL_14      APT_MENU_EXTERNAL_13; extern APT_MenuItem APT_menuItem_14_class
+#define APT_MENU_EXTERNAL_13      APT_MENU_EXTERNAL_12; extern APT_MenuItem APT_menuItem_13_class
+#define APT_MENU_EXTERNAL_12      APT_MENU_EXTERNAL_11; extern APT_MenuItem APT_menuItem_12_class
+#define APT_MENU_EXTERNAL_11      APT_MENU_EXTERNAL_10; extern APT_MenuItem APT_menuItem_11_class
+#define APT_MENU_EXTERNAL_10      APT_MENU_EXTERNAL_9;  extern APT_MenuItem APT_menuItem_10_class
+#define APT_MENU_EXTERNAL_9       APT_MENU_EXTERNAL_8;  extern APT_MenuItem APT_menuItem_9_class
+#define APT_MENU_EXTERNAL_8       APT_MENU_EXTERNAL_7;  extern APT_MenuItem APT_menuItem_8_class
+#define APT_MENU_EXTERNAL_7       APT_MENU_EXTERNAL_6;  extern APT_MenuItem APT_menuItem_7_class
+#define APT_MENU_EXTERNAL_6       APT_MENU_EXTERNAL_5;  extern APT_MenuItem APT_menuItem_6_class
+#define APT_MENU_EXTERNAL_5       APT_MENU_EXTERNAL_4;  extern APT_MenuItem APT_menuItem_5_class
+#define APT_MENU_EXTERNAL_4       APT_MENU_EXTERNAL_3;  extern APT_MenuItem APT_menuItem_4_class
+#define APT_MENU_EXTERNAL_3       APT_MENU_EXTERNAL_2;  extern APT_MenuItem APT_menuItem_3_class
+#define APT_MENU_EXTERNAL_2       APT_MENU_EXTERNAL_1;  extern APT_MenuItem APT_menuItem_2_class
+#define APT_MENU_EXTERNAL_1       extern APT_MenuItem APT_menuItem_1_class
+
+				
+// clbFunctionType is the function pointer definition for the callback 
+// for each menu item. Function parameters:
+// entry:             A pointer to this MenuItem
+// callbackType:      lower 6 bits (0..63) decode one of the types #defines below. 
+//                    MSB decodes if cursor is set on this MenuItem and MSB-1
+//                    will give the info if MenuItem is selected. You should also use
+//                    the define below to decode
+// line:              Will give the current line in which the MenuItem is shown
+//                   (Starting form 0)
+// returns:          Meaning is given in below defires. If no meaning
+//                   specified should always return false to be future proove
+typedef bool (*clbFunctionType)(APT_Menu* 		menu, 
+								APT_MenuItem* 	entry,
+								const uint8_t 	callbackType, 
+								uint8_t 		line);
+
+#define APT_CLB_ISFULLMENUITEM     0  // should returns true if full MenuItem
+                                      // and false if line MenuItem 
+#define APT_CLB_CHECKIFHIDDEN      1  // return true if the MenuItem should be hidden
+#define APT_CLB_DONEEDUPDATE       2  // return true if a update is needed, else false
+#define APT_CLB_ONENTER            3  // enter from lower level, if called on a
+                                      // a leaf element, return true if it can be
+                                      // activated, else false
+#define APT_CLB_ONCOMEBACK         4  // come back from a higher level
+#define APT_CLB_ONEXIT             5  // if an active menu item goes back or 
+                                      // if returned from MenuItem
+#define APT_CLB_ONGOHIGHER         6  // enter one higher lever 
+#define APT_CLB_ONTIMER            7  
+#define APT_CLB_ONLOOP             8
+
+#define APT_CLB_CAN_ONCURSORON     9   // ToDo: 
+
+// When the menu needs display updates, one of the following
+// messages is sent. A line which needs a definitve update 
+// receives APT_CLB_ONUPDATE_LINE if it is activated. Lines 
+// which would not necessarily need an update receives 
+// APT_CLB_ONUPDATE_OTHERLINE (can be used if no single
+// line updates are possible and always the full menu needs to 
+// be updated). APT_CLB_ONCURSORUPDATE is received if only the 
+// scrollbar and cursor would need an update
+#define APT_CLB_ONUPDATE_LINE         10  // content, cursor and scrollbar
+                                          // of this line needs update
+#define APT_CLB_ONUPDATE_OTHERLINE    11  // content, cursor and scrollbar 
+                                          // of another entry is updated
+#define APT_CLB_ONCURSORUPDATE        12  // only update the cursor and scrollbar
+
+// use these functions to decode only the reason of the callback
+#define APT_CLB_GETCONDITION(x)        (0x3F & x)
+#define APT_CLB_CHECKCONDITION(x,cond) ( (0x3F & x) == cond )
+// Get info if cursor is on MenuItem 
+#define APT_CLB_ISCURSORON(x)          ( (0x80 & x) != 0 )
+#define APT_CLB_SETCURSORON            0x80
+// Get info if cursor is on MenuItem 
+#define APT_CLB_ISACTIVEATED(x)        ( (0x40 & x) != 0 )
+#define APT_CLB_SETACTIVEATED          0x40
+
+
+
+
+// Each MenuItem can have siblings or childrens. A MenuItem without children
+// is called a leaf MenuItem. There can be two different leaf MenuItem types. 
+// A line MenuItem is shown only in the actual MenuItem line if entered. 
+// A full MenuItem is shown in the complete menu area (so no other menu 
+// items are shown).    
+
+
+class APT_MenuItem {
+
+  public:
+
+    /********************************************************************/
+	/** Constructur and basic functions                                **/
+	/********************************************************************/
+
+    // Constructor of the MenuItem. 
+    APT_MenuItem(const uint8_t id, const char * const contentPointer );
+    APT_MenuItem(const uint8_t id, const char * const contentPointer, clbFunctionType clbFunction );
+
+    // returns the ID of the MenuItem
+    uint8_t 		getID() { return id; };
+		
+    // Copies the content to be shown in the MenuItem to the contentBuffer.
+    // ContentBuffer must have sufficient memory allocated to hold the full 
+    // content string.
+    void           	getContent(char* contentBuffer);
+	
+    // Returns true, if this item is a full MenuItem (in contrast to 
+    // a line MenuItem). 
+    // Note: If no callback is given, it is always a line menu item.
+    // Note: If you pass the MenuItem pointer, it will be passed 
+	// forward to the callback function of this menu item
+    bool           	isFullMenuItem(APT_Menu* menu = NULL);
+
+	/********************************************************************/
+	/** creating and walking through the menu structure                **/
+	/********************************************************************/
+	
+    // Sets and returns parent of an element. (Note: If it is the root 
+    // menu, NULL is returned.
+    bool            hasParent(); // returns true if not oldest generation (root, no parent)
+    APT_MenuItem*   getParent(); // 
+    void     		setPredecessor(APT_MenuItem* pre) { this->pre = pre; };
+	
+	
+    // functions to set siblings, child and parents
+    void            addChild(APT_MenuItem* child);
+    APT_MenuItem*   getChild() { return child; };
+    bool            hasChild() { return child != NULL; };
+
+	
+    // adds a sibling 
+	void            addSibling(APT_MenuItem* sibling); // adds a new born sibling (youngest)
+	
+	// query and return siblings
+	bool            hasYoungerSibling(); 			  // returns true if there is a younger sibling    
+	APT_MenuItem*   getYoungerSibling();				  // returns next younger sibling 
+													  // (if no younger sibing, return NULL)
+    bool            hasOlderSibling(); 				  // returns true if there is an older sibling
+    APT_MenuItem*   getOlderSibling();				  // returns next older sibling 
+													  // (if no older sibing, return NULL)
+    
+	// returns true if MenuItem is oldestSibling
+	bool   			isOldestSibling();
+	APT_MenuItem*	getOldestSibling();
+	
+	// count the total number of siblings
+    uint8_t        getNumberOfSibings(void);    
+	// count the hwo oldest sibling thie MenuIem is
+    uint8_t 	   getCountOfOlderSiblings(void);
+	// get the n-th sibling, returns NULL if it does not exist.
+    APT_MenuItem*  getNthSibling(const uint8_t n);
+
+
+    /********************************************************************/
+	/** Callback handling                                              **/
+	/********************************************************************/
+	
+    // Stores the callback of this MenuItem . If no callback is stored 
+    // (i.e. callback==NULL) nothing will happenn.
+    void        setCallback(  clbFunctionType clbFunction );
+    inline bool hasCallback(void) { return clbFunction != NULL; };
+    // will call the callbackback function with given parameters
+    bool        doCallback( APT_Menu* menu,
+                            const uint8_t callbackType, 
+                            const uint8_t line);  
+    
+	
+  	// configure each menu item to be hidden or shown
+	// protected since it can only be accessed from APT_Menu
+	// which has to handle the cursor and scroll position
+	void hide();
+	void show();
+	bool isHidden();
+	// ToDo, make this private or add link to Menu and start
+	
+	
+  protected:
+
+    /********************************************************************/
+	/** Menu tree pointers                                             **/
+	/********************************************************************/
+
+	APT_MenuItem();
+    
+	void setSibling(APT_MenuItem* sibling); // to do, make this private ?
+    // Storing the three pointers within the tree.
+    APT_MenuItem *pre    = NULL;            // NULL if root menu layer, 
+											// if oldest sibling link to parent
+											// else link to next older sibling
+    APT_MenuItem *child   = NULL;           // oldest child, NULL if none
+    APT_MenuItem *sibling = NULL;           // next younger sibling, null if 
+											// no younger sibling
+   
+
+	
+  private:
+
+    /********************************************************************/
+	/** private elements                                               **/
+	/********************************************************************/
+
+	const uint8_t       id;                     // unique ID of menu element
+    const char * const  contentPointer;         // pointer to menu entry to be shown
+    clbFunctionType     clbFunction = NULL; 	// stores the callback function
+	uint8_t				config;					// configuration parameters of each menu entry
+	#define  APT_MENUITEM_CONFIG_HIDDEN       0
+   
+}; // class APT_MenuItem 
+
 typedef void (*clearMenuFunctionType)(void);
 typedef void (*clearLineFunctionType)(const uint8_t line);
-typedef void (*defaultShowEntryFunctionType)(APT_Menu* menu, APT_MenuItem* entry,const uint8_t callbackType, const uint8_t line) ;
 
+								
 class APT_Menu {
   public:
 
@@ -130,27 +403,44 @@ class APT_Menu {
     // entry:     pointer to MenuEntry class which should be displayed
     // line:      number of line for this entry starting from 0
     // cursor:    true if the curser is at this line 
-    void setDefaultShowEntryFunction(defaultShowEntryFunctionType defaultShowEntryFunction);
+    void setDefaultShowEntryFunction(clbFunctionType defaultShowEntryFunction);
     //
-    void callDefaultShowEntryFunction( APT_MenuItem* entry,const uint8_t callbackType, const uint8_t line);
+    bool callDefaultShowEntryFunction( APT_MenuItem* entry,const uint8_t callbackType, const uint8_t line);
     
     // Pointer to the functions which are called if menu should be cleared 
     // Seperate functions for full menu or a line of the menu can be specified.
     // If a function is not specified (i.e. NULL), it is not used.
+	// clearLineFunctionType clearLineFunction = NULL == NULL not set ! ToDo
     void setClearFunction( clearMenuFunctionType clearMenuFunction, clearLineFunctionType clearLineFunction = NULL);
     void setLineClearFunction( clearLineFunctionType clearLineFunction);
     
     // use these functions to navigate 
     // through your menu items. If one is within a MenuItem, 
-    // the goUp/goDown will not change, the only way  to leaf 
-    // is the goBack() function
+    // the goUp/goDown will not change, the only way to leaf 
+    // is the goBack() function. goInto will go into the next menu level
+	// or enter a MenuItem.
     void goUp();
     void goDown();
     void goInto();
     void goBack();
-    void gotoRoot();
-    void gotoID(uint8_t ID);
-    void gotoMenuItem(APT_MenuItem *item);
+    
+	//
+	// If ID cannot be found, menu is unchanged
+	// fastSearch:   if true, diretly goes to element 
+	//               (w/o traversing the menu structure).
+	//				 Can be used to speed up function if 
+	//				 no callbacks are installed which should 
+	//				 be called
+	void 		gotoID(uint8_t ID, bool fastSearch = false);
+    void 		gotoMenuItem(APT_MenuItem *item,bool fastSearch = false);
+    void 		gotoRoot();      // goto first layer
+	void 		gotoFirstRoot(); // goto first and first menu element
+	
+	// get a pointer to the MenuItem with the given ID. 
+	// If this MenuItem does not exists, NULL is returned
+	APT_MenuItem*	getMenuItem(uint8_t id);
+	
+	//
     bool isAMenuItemActivated(void);
 
 
@@ -173,16 +463,33 @@ class APT_Menu {
     //               of the menu entires. 
     void setWrapAround(const bool continuously=false);
     void setNoWrapAround(void);
-	
-    //uint8_t getCurrentID();
-    //APT_MenuItem* getCurrentMenuItem();
 
-    // Returns pointer to current MenuItem (where cursor 
-    // is located
-    APT_MenuItem* getCurrentMenuItem(void);
+    // Returns pointer to current (where cursor 
+    // is located) MenuItem or its ID [independent 
+	// of menu is actived or not)
+    APT_MenuItem* 	getCurrentMenuItem(void);
+    uint8_t 		getCurrentMenuItemID(void);
     // Returns pointer to active MenuItem. If no 
     // Menu Item is active, NULL is returned
-    APT_MenuItem* getActiveMenuItem(void);
+    APT_MenuItem*   getActiveMenuItem(void);
+
+	// ToDO: Docu
+	// If line is not available, returns 
+	// last available line.
+    APT_MenuItem* 	getMenuItemInLine(uint8_t line);
+	uint8_t 		getMenuItemIDInLine(uint8_t line);
+
+	
+	// control visbility of menu items
+	void hide(uint8_t ID);
+	void show(uint8_t ID);
+	bool isHidden(uint8_t ID);
+	void hide(APT_MenuItem* menuItem);
+	void show(APT_MenuItem* menuItem);
+	bool isHidden(APT_MenuItem* menuItem);
+	
+
+	
     
     // Force an update of the current MenuItem 
     // or the complete menu
@@ -199,27 +506,29 @@ class APT_Menu {
     // call this once at startup to setup the menu
     void setup(APT_MenuItem* firstEntry);
 
-    private:
-      uint8_t cursorPosition = 0;  // postition of cusor in current menu
-      uint8_t scrollPosition = 0;  // current scroll position
+  private:
+    uint8_t cursorPosition = 0;  // postition of cusor in current menu
+    uint8_t scrollPosition = 0;  // current scroll position
       
-      uint8_t displayLines   = 0;  // number of lines in menu
+    uint8_t displayLines   = 0;  // number of lines in menu
       
-      APT_MenuItem* firstEntry = NULL;          // this is basically root
-      APT_MenuItem* entryOfActiveLayer = NULL;  // first entry of current layer
+    APT_MenuItem* firstEntry = NULL;          // this is basically root
+    APT_MenuItem* entryOfActiveLayer = NULL;  // first entry of current layer
 
-      // The three function pointers which could be used to customize 
-      // the menu behavior
-      clearMenuFunctionType         clearMenuFunction = NULL;
-      clearLineFunctionType         clearLineFunction = NULL;
-      defaultShowEntryFunctionType  defaultShowEntryFunction = NULL;
+	APT_MenuItem* getMenuItem(APT_MenuItem* firstEntryOfRow, uint8_t id);
+	
+    // The three function pointers which could be used to customize 
+    // the menu behavior
+    clearMenuFunctionType         clearMenuFunction = NULL;
+    clearLineFunctionType         clearLineFunction = NULL;
+    clbFunctionType               defaultShowEntryFunction = NULL;
 
-      uint8_t configuration;
-      #define APT_MENU_CONFIG_BIT_SCROLLBAR            0    // 
-      #define APT_MENU_CONFIG_BIT_MENU_OFF             1    // If activated, turn menu off.
-      #define APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND    2	// If activated, menu will start from 
-	                                                        // first entry in first menu line if 
-															// goDown() is called.
+    uint8_t configuration;
+    #define APT_MENU_CONFIG_BIT_SCROLLBAR            0    // 
+    #define APT_MENU_CONFIG_BIT_MENU_OFF             1    // If activated, turn menu off.
+    #define APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND    2	  // If activated, menu will start from 
+														  // first entry in first menu line if 
+													      // goDown() is called.
       #define APT_MENU_CONFIG_BIT_SCROLL_CONTINUOUS    3	// Only when APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND
 															// is activated: cursor will not jump at 
                                                             // position 0 but menu will continuously be 
@@ -251,12 +560,9 @@ class APT_Menu {
       #define APT_MENU_ADD_CURSOR_UPDATE()      bitSet(status, APT_MENU_STATUS_BIT_NEEDCURSORUPDATE ) 
       
       // Shows the updated menu
-      void updateMenu();
-      
+      void updateMenu();    
       void clearMenu(void);
       void clearLine(uint8_t line);
-
-  private:
       
       // count the number of entries in current layer
       uint8_t       getNumberOfEntriesOfCurrentLayer(void);
@@ -280,151 +586,8 @@ class APT_Menu {
       bool doShownMenuItemsNeedUpdate(uint8_t element);
       
         
-};
+}; // class APT_Menu
 
 
-
-        
-#define APT_menuItem_0_class  APT_menuItem_1_class      // just to avoid compiler errors, will never be called
-
-#define APT_MENUITEM_ADDLEAF(id,parent,content,clbFunction) \
-        const char APT_MENUITEM_ENRY ## id [] PROGMEM = { content }; \
-        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENRY ## id), clbFunction); \
-        inline void APT_MENU_ADDCHILD_ ## id ## _func() { if (id!=1) { (parent==0 ? \
-                APT_menuItem_1_class.addSibling(& APT_menuItem_ ## id ## _class ) : \
-                APT_menuItem_ ## parent ## _class.addChild(& APT_menuItem_ ## id ## _class ) ); } }; 
-
-#define APT_MENUITEM_ADD(id,parent,content) \
-        const char APT_MENUITEM_ENRY ## id [] PROGMEM = { content }; \
-        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENRY ## id)); \
-        inline void APT_MENU_ADDCHILD_ ## id ## _func() { if (id!=1) { (parent==0 ? \
-                APT_menuItem_1_class.addSibling(& APT_menuItem_ ## id ## _class ) : \
-                APT_menuItem_ ## parent ## _class.addChild(& APT_menuItem_ ## id ## _class ) ); } }; 
-
-
-
-// Each MenuItem can have siblings or childrens. A MenuItem without children
-// is called a leaf MenuItem. There can be two different leaf MenuItem types. 
-// A line MenuItem is shown only in the actual MenuItem line if entered. 
-// A full MenuItem is shown in the complete menu area (so no other menu 
-// items are shown).    
-
-// clbFunctionType is the function pointer definition for the callback 
-// for each menu item. Function parameters:
-// entry:             A pointer to this MenuItem
-// callbackType:      lower 6 bits (0..63) decode one of the types #defines below. 
-//                    MSB decodes if cursor is set on this MenuItem and MSB-1
-//                    will give the info if MenuItem is selected. You should also use
-//                    the define below to decode
-// line:              Will give the current line in which the MenuItem is shown
-//                   (Starting form 0)
-// returns:          Meaning is given in below defires. If no meaning
-//                   specified should always return false to be future proove
-typedef bool (*clbFunctionType)(APT_Menu* 		menu, 
-								APT_MenuItem* 	entry,
-								const uint8_t 	callbackType, 
-								uint8_t 		line);
-
-#define APT_CLB_ISFULLMENUITEM     0  // should returns true if full MenuItem
-                                      // and false if line MenuItem 
-#define APT_CLB_CHECKIFHIDDEN      1  // return true if the MenuItem should be hidden
-#define APT_CLB_DONEEDUPDATE       2  // return true if a update is needed, else false
-#define APT_CLB_ONENTER            3  // enter from lower level, if called on a
-                                      // a leaf element, return true if it can be
-                                      // activated, else false
-#define APT_CLB_ONCOMEBACK         4  // come back from a higher level
-#define APT_CLB_ONEXIT             5  // if an active menu item goes back or 
-                                      // if returned from MenuItem
-#define APT_CLB_ONGOHIGHER         6  // enter one higher lever 
-#define APT_CLB_ONTIMER            7  
-#define APT_CLB_ONLOOP             8
-
-// When the menu needs display updates, one of the following
-// messages is sent. A line which needs a definitve update 
-// receives APT_CLB_ONUPDATE_LINE if it is activated. Lines 
-// which would not necessarily need an update receives 
-// APT_CLB_ONUPDATE_OTHERLINE (can be used if no single
-// line updates are possible and always the full menu needs to 
-// be updated). APT_CLB_ONCURSORUPDATE is received if only the 
-// scrollbar and cursor would need an update
-#define APT_CLB_ONUPDATE_LINE         10  // content, cursor and scrollbar
-                                          // of this line needs update
-#define APT_CLB_ONUPDATE_OTHERLINE    11  // content, cursor and scrollbar 
-                                          // of another entry is updated
-#define APT_CLB_ONCURSORUPDATE        12  // only update the cursor and scrollbar
-
-// use these functions to decode only the reason of the callback
-#define APT_CLB_GETCONDITION(x)        (0x3F & x)
-#define APT_CLB_CHECKCONDITION(x,cond) ( (0x3F & x) == cond )
-// Get info if cursor is on MenuItem 
-#define APT_CLB_ISCURSORON(x)          ( (0x80 & x) != 0 )
-#define APT_CLB_SETCURSORON            0x80
-// Get info if cursor is on MenuItem 
-#define APT_CLB_ISACTIVEATED(x)        ( (0x40 & x) != 0 )
-#define APT_CLB_SETACTIVEATED          0x40
-
-
-class APT_MenuItem {
-  public:
-    // Constructor of the MenuItem. 
-    APT_MenuItem(uint8_t id, const char * contentPointer );
-    APT_MenuItem(uint8_t id, const char * contentPointer, clbFunctionType clbFunction );
-
-    // returns the unique ID of the MenuItem
-    inline uint8_t getID() { return id; };
-    // Copies the content to be shown in the MenuItem to the contentBuffer.
-    // ContentBuffer must have sufficient memory allocated to hold the full 
-    // content string.
-    void           getContent(char* contentBuffer);
-    // Returns true, if this item is a full MenuItem (in contrast to 
-    // a line MenuItem). 
-    // Note: if no callback is given, it is always a line menu item.
-    // Note: If you pass the MenuItem pointer, it will be passed forward to the 
-    // callback function of this menu item
-    bool           isFullMenuItem(APT_Menu* menu = NULL);
-    
-    // functions to set siblings, child and parents
-    void                  addChild(APT_MenuItem* child);
-    inline APT_MenuItem*  getChild() { return child; };
-    inline bool           hasChild() { return child != NULL; };
-
-    void                  addSibling(APT_MenuItem* sibling);
-    inline bool           hasSibling() { return sibling != NULL; }; 
-    inline APT_MenuItem*  getSibling() { return sibling; };
-    void                  setSibling(APT_MenuItem* sibling);
-    
-    // count the number of siblings including this.
-    // ToDo: in the moment this only starts form the current sibling, not from the first :-/
-    uint8_t        getSibingsCount(void);    
-    // get the n-th sibling, returns NULL if it does not exist.
-    APT_MenuItem*  getNthSibling(const uint8_t n);
-
-    // Sets and returns parent of an element. (Note: If it is the root 
-    // menu, NULL is returned.
-    inline APT_MenuItem*  getParent() { return parent; };
-    inline void           setParent(APT_MenuItem* parent) { this->parent = parent; };
-    
-    // Stores the callback of this MenuItem . If no callback is stored 
-    // (i.e. callback==NULL) nothing will happenn.
-    void        setCallback(  clbFunctionType clbFunction );
-    inline bool hasCallback(void) { return clbFunction != NULL; };
-    // will call the callbackback function with given parameters
-    bool        doCallback( APT_Menu* menu,
-                            const uint8_t callbackType, 
-                            const uint8_t line);  
-    
-  private:
-    // Storing the three structure.
-    APT_MenuItem *parent  = NULL;           // NULL if root menu layer
-    APT_MenuItem *child   = NULL;           // first child, NULL if none
-    APT_MenuItem *sibling = NULL;           // next sibling, null if no sibling
-   
-    uint8_t       id;                       // unique ID of menu element
-    const char *  contentPointer;           // pointer to menu entry to be shown
-   
-    // stores the callback function
-    clbFunctionType clbFunction = NULL;  
-   
-}; // class APT_MenuItem 
 
 #endif

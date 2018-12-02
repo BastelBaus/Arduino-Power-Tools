@@ -99,16 +99,16 @@ bool MENU6_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
   case APT_CLB_ONENTER:         return false; // false cannot be entered
   case APT_CLB_ONCURSORUPDATE:
   case APT_CLB_ONUPDATE_OTHERLINE: // must be updated in both cases
-  case APT_CLB_ONUPDATE_LINE:   char printLine[23];
-                                char cursorItem = APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) );
-                                char content[APT_EXAMPLE_LCD_COLUMNS+1]; entry->getContent(content);
-                                char scrollbarItem = menu->getScrollbarItem(line);
-                                if(scrollbarItem == 0) scrollbarItem = ' '; else scrollbarItem -= 1;
-                                sprintf(printLine,"%c%-15s%3d%c",cursorItem,content,menu6_value,scrollbarItem);
-                                lcd.setCursor(0,line);
-                                lcd.print(printLine);
-                                break;
-  default:                      return false; // unhandled command
+  case APT_CLB_ONUPDATE_LINE:   { char printLine[23];
+                                  char cursorItem = APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) );
+                                  char content[APT_EXAMPLE_LCD_COLUMNS+1]; entry->getContent(content);
+                                  char scrollbarItem = menu->getScrollbarItem(line);
+                                  if(scrollbarItem == 0) scrollbarItem = ' '; else scrollbarItem -= 1;
+                                  sprintf(printLine,"%c%-15s%3d%c",cursorItem,content,menu6_value,scrollbarItem);
+                                  lcd.setCursor(0,line);
+                                  lcd.print(printLine);
+                                } break;
+  default:                      {} // unhandled command
  };
  return false;
 }
@@ -125,17 +125,17 @@ bool MENU5_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
                                 inputHandler.APT_Button::attachHandler(  functionButtonMenu5 );
                                 return true; // true, since can be activated
   case APT_CLB_ONCURSORUPDATE:  
-  case APT_CLB_ONUPDATE_LINE:   lcd.setCursor(0,line);
-                                lcd.print( APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) ) );
-                                char buffer[20]; entry->getContent(buffer);
-                                char printLine[22];
-                                sprintf(printLine,"%s%3d",buffer,menu5_value);
-                                lcd.print(printLine);
-                                lcd.setCursor(19,line); 
-                                uint8_t scrollbarItem = menu->getScrollbarItem(line);
-                                if(scrollbarItem!=0) lcd.write(scrollbarItem-1) ;
-                                break;
-  default:                      return false; // unhandled command
+  case APT_CLB_ONUPDATE_LINE:   { lcd.setCursor(0,line);
+                                  lcd.print( APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) ) );
+                                  char buffer[20]; entry->getContent(buffer);
+                                  char printLine[22];
+                                  sprintf(printLine,"%s%3d",buffer,menu5_value);
+                                  lcd.print(printLine);
+                                  lcd.setCursor(19,line); 
+                                  uint8_t scrollbarItem = menu->getScrollbarItem(line);
+                                  if(scrollbarItem!=0) lcd.write(scrollbarItem-1) ;
+                                } break;
+  default:                      {}// unhandled command
  };
  return false;
 }
@@ -149,16 +149,16 @@ bool MENU4_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
                                 return false; // false, since cannot be activated
                                 break;
  case APT_CLB_ONCURSORUPDATE:
- case APT_CLB_ONUPDATE_LINE:    lcd.setCursor(0,line);
-                                lcd.print( APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) ) );
-                                char buffer[20]; entry->getContent(buffer);
-                                lcd.print(buffer);
-                                lcd.print(menu4_value);
-                                lcd.setCursor(19,line); 
-                                uint8_t scrollbarItem = menu->getScrollbarItem(line);
-                                if(scrollbarItem!=0) lcd.write(scrollbarItem-1) ;
-                                break;
-  default:                      return false; // unhandled command
+ case APT_CLB_ONUPDATE_LINE:    { lcd.setCursor(0,line);
+                                  lcd.print( APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) ) );
+                                  char buffer[20]; entry->getContent(buffer);
+                                  lcd.print(buffer);
+                                  lcd.print(menu4_value);
+                                  lcd.setCursor(19,line); 
+                                  uint8_t scrollbarItem = menu->getScrollbarItem(line);
+                                  if(scrollbarItem!=0) lcd.write(scrollbarItem-1) ;
+                                } break;
+  default:                      {}; // unhandled command
  };
  return false;
 }
@@ -178,10 +178,12 @@ bool MENU3_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackT
                                   lcd.setCursor(0,2); lcd.print(F("to exit."));                                  
                                 } else menu->callDefaultShowEntryFunction(entry, callbackType, line);
                                 break;                                                               
-  default:                      return false; // unhandled command
+  default:                      {}; // unhandled command
  };
  return false;
 }
+
+
 
 
 #endif // #ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES

@@ -24,24 +24,29 @@
 #include <assert.h>
 #include "APT_menu.h"
 
-
+#define APT_DEBUG 1
+#include "APT_Debug.h"
 
 /***************************************************************************/
 /* DefaultSerialMenu Functions                                             */
 /***************************************************************************/
 
+#ifdef APT_DEFAULT_SERIEL_MENU_HANDLING_ROUTINES
   
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 void APT_DefaultSerialMenu_clearLine(uint8_t line) {
-  for(uint8_t i=0;i<50;i++) Serial.println("");
-  Serial.println("------- MenuL -------");
+  APT_DefaultSerialMenu_clearMenu();
 }
+#pragma GCC diagnostic pop
+
 
 void APT_DefaultSerialMenu_clearMenu() {
   for(uint8_t i=0;i<50;i++) Serial.println("");
   Serial.println("------- MenuM -------");
 }
 
-char* scrollbarSerialCharacters[] = {" ", "║","╗","╣","╝"};
+const char * scrollbarSerialCharacters[] = {" ", "║","╗","╣","╝"};
 
 
 void APT_DefaultSerialMenu_showMenuItem(APT_Menu* menu,APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
@@ -62,10 +67,10 @@ void APT_DefaultSerialMenu_showMenuItem(APT_Menu* menu,APT_MenuItem* entry, cons
     Serial.print("(");
     Serial.print(entry->getID());
     Serial.print(") s: ");
-    Serial.print((uint16_t) entry->getSibling(), HEX );
-    if (entry->getSibling() != NULL) {
+    Serial.print((uint16_t) entry->getYoungerSibling(), HEX );
+    if (entry->getYoungerSibling() != NULL) {
       Serial.print("(");
-      Serial.print(entry->getSibling()->getID());
+      Serial.print(entry->getYoungerSibling()->getID());
       Serial.print(")");
     };
     Serial.print(" c: ");
@@ -88,21 +93,32 @@ void APT_DefaultSerialMenu_showMenuItem(APT_Menu* menu,APT_MenuItem* entry, cons
   Serial.println("");
 }
 
+#endif
+
+
 
 /***************************************************************************/
 /* DefaultLCDMenu Functions                                                */
 /***************************************************************************/
+//#ifdef APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES
 
-#include <LiquidCrystal_I2C.h>       // Library for I2C LCD
 
-LiquidCrystal_I2C   lcd(0x27, 20, 4); // Set address 0x27 (default) 20 x 4 character LCD
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wuninitialized"
+  #include <LiquidCrystal_I2C.h>       	// Library for I2C LCD
+  #pragma GCC diagnostic pop
+  extern LiquidCrystal_I2C   lcd;		// lcd class must be defined in main program.
 
-char scrollbarLCDCharacters[4][8] = {
-    {B10001, B10001, B10001, B10001, B10001, B10001, B10001, B10001}, // none
-    {B11111, B11111, B10001, B10001, B10001, B10001, B10001, B10001}, // upper
-    {B10001, B10001, B10001, B11111, B11111, B10001, B10001, B10001}, // mid
-    {B10001, B10001, B10001, B10001, B10001, B10001, B11111, B11111}  // lower
-};
+
+#define PUT_TO_PROGMEM
+#ifdef  PUT_TO_PROGMEM 
+
+const char CHAR_NONE[8]  PROGMEM = {B10000, B10000, B10000, B10000, B10000, B10000, B10000, B10000}; // none
+const char CHAR_UPPER[8] PROGMEM = {B11111, B11111, B10000, B10000, B10000, B10000, B10000, B10000}; // upper
+const char CHAR_MID[8]   PROGMEM = {B10000, B10000, B10000, B11111, B11111, B10000, B10000, B10000}; // mid
+const char CHAR_LOWER[8] PROGMEM = {B10000, B10000, B10000, B10000, B10000, B10000, B11111, B11111}; // lower
+
+const char* const scrollbarLCDCharacters[4] PROGMEM = { CHAR_NONE, CHAR_UPPER, CHAR_MID, CHAR_LOWER };
 
 
 void APT_DefaultLCDMenu_init() {
@@ -110,30 +126,73 @@ void APT_DefaultLCDMenu_init() {
   lcd.clear();
   lcd.backlight();
   
-  lcd.createChar(0, (uint8_t*)scrollbarLCDCharacters[0]);
-  lcd.createChar(1, (uint8_t*)scrollbarLCDCharacters[1]);
-  lcd.createChar(2, (uint8_t*)scrollbarLCDCharacters[2]);
-  lcd.createChar(3, (uint8_t*)scrollbarLCDCharacters[3]);
+  for(uint8_t i=0; i<4;i++) {
+    char buffer[8];
+	memcpy_P(buffer, (char*)pgm_read_word(&(scrollbarLCDCharacters[i])), 8); 
+	lcd.createChar(i, (uint8_t*) buffer);
+  }
+  
+  //lcd.createChar(0, (uint8_t*)scrollbarLCDCharacters[0]);
+  //lcd.createChar(1, (uint8_t*)scrollbarLCDCharacters[1]);
+  //lcd.createChar(2, (uint8_t*)scrollbarLCDCharacters[2]);
+  //lcd.createChar(3, (uint8_t*)scrollbarLCDCharacters[3]);
 }
+
+#else
+
+char scrollbarLCDCharacters[4][8] = {
+    {B10000, B10000, B10000, B10000, B10000, B10000, B10000, B10000}, // none
+    {B11111, B11111, B10000, B10000, B10000, B10000, B10000, B10000}, // upper
+    {B10000, B10000, B10000, B11111, B11111, B10000, B10000, B10000}, // mid
+    {B10000, B10000, B10000, B10000, B10000, B10000, B11111, B11111}  // lower
+};
+void APT_DefaultLCDMenu_init() {
+  lcd.init();
+  lcd.clear();
+  lcd.backlight();
+    
+  for(uint8_t i=0; i<4;i++)
+     lcd.createChar(i, (uint8_t*)scrollbarLCDCharacters[i]);
+  
+  //lcd.createChar(0, (uint8_t*)scrollbarLCDCharacters[0]);
+  //lcd.createChar(1, (uint8_t*)scrollbarLCDCharacters[1]);
+  //lcd.createChar(2, (uint8_t*)scrollbarLCDCharacters[2]);
+  //lcd.createChar(3, (uint8_t*)scrollbarLCDCharacters[3]);
+}
+
+#endif
+
+
+
 
 void APT_DefaultLCDMenu_clear() {
   lcd.clear();
 }
 
-void APT_DefaultLCDMenu_showMenuItem(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
-  // print cursor
-  lcd.setCursor(0, line);
-  lcd.print( APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) ) );
-  
-  // print content
-  char buffer[20]; entry->getContent(buffer);
-  lcd.print(buffer);
+bool APT_DefaultLCDMenu_showMenuItem(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
 
-  // print scrollbar
-  uint8_t scrollbarItem = menu->getScrollbarItem(line);
-  lcd.setCursor(19,line); 
-  if(scrollbarItem!=0) lcd.write(scrollbarItem-1) ;
+	switch( APT_CLB_GETCONDITION(callbackType) ) {
+		case APT_CLB_ONUPDATE_LINE:
+		case APT_CLB_ONCURSORUPDATE:  {
+										// print cursor
+										lcd.setCursor(0, line);
+										lcd.print( APT_GET_DEFAULT_CURSOR( APT_CLB_ISCURSORON(callbackType), APT_CLB_ISACTIVEATED(callbackType) ) );
+  
+										// print content
+										char buffer[22]; entry->getContent(buffer);
+										lcd.print(buffer);
+
+										// print scrollbar
+										uint8_t scrollbarItem = menu->getScrollbarItem(line);
+										lcd.setCursor(19,line); 
+										if(scrollbarItem!=0) lcd.write(scrollbarItem-1) ;
+									  } return false;
+		default: return false;
+	}
+  return false; // should never reach here
 }
+
+//#endif
 
 /***************************************************************************/
 /* APT_Menu class                                                          */
@@ -144,24 +203,25 @@ bool APT_Menu::needDisplayUpdate(void) {
          bitRead(status, APT_MENU_STATUS_BIT_NEEDLINEUPDATE); // toDo add cursor update
 }
 
-void APT_Menu::setDefaultShowEntryFunction( defaultShowEntryFunctionType defaultShowEntryFunction) {
+void APT_Menu::setDefaultShowEntryFunction( clbFunctionType defaultShowEntryFunction) {
   this->defaultShowEntryFunction  = defaultShowEntryFunction;
 }
-void APT_Menu::callDefaultShowEntryFunction( APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
-  (* (this->defaultShowEntryFunction) )(this, entry, callbackType, line);
-}
-void APT_Menu::setClearFunction( void (*clearMenuFunction)(void), 
-                       void (*clearLineFunction)(uint8_t line)) {
-  this->clearLineFunction = clearLineFunction;
-  this->clearMenuFunction = clearMenuFunction;
+bool  APT_Menu::callDefaultShowEntryFunction( APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
+  return (* (this->defaultShowEntryFunction) )(this, entry, callbackType, line);
 }
 
-void APT_Menu::setLineClearFunction( void (*clearLineFunction)(uint8_t line) ) {
+void APT_Menu::setClearFunction( clearMenuFunctionType clearMenuFunction, clearLineFunctionType clearLineFunction) {
+  this->clearMenuFunction = clearMenuFunction;
+  if(clearLineFunction!=NULL) this->clearLineFunction = clearLineFunction;
+}
+
+void APT_Menu::setLineClearFunction(  clearLineFunctionType clearLineFunction ) {
   this->clearLineFunction = clearLineFunction;
 }
 
 
 APT_Menu::APT_Menu(uint8_t displayLines) {
+  Serial.begin(115200);
   this->displayLines              = displayLines;
   APT_MENU_ADD_FULL_UPDATE();  
 }
@@ -191,7 +251,7 @@ void APT_Menu::checkForNeededLineUpdates()  {
 
   // go to correct scroll position
   for (uint8_t i = 0; i < scrollPosition; i++) {
-    entry = entry->getSibling();
+    entry = entry->getYoungerSibling();
     assert(entry!=NULL); // ToDo: any exception handling (should not happen)
   }
 
@@ -205,7 +265,7 @@ void APT_Menu::checkForNeededLineUpdates()  {
     // we have a display update in any case
     if( bitRead(status,APT_MENU_STATUS_BIT_NEEDFULLUPDATE) ) return;
   
-    entry = entry->getSibling();
+    entry = entry->getYoungerSibling();
   }
 } // APT_Menu::checkForNeededLineUpdates() 
 
@@ -215,7 +275,7 @@ void APT_Menu::loop() {
   if ( bitRead(configuration, APT_MENU_CONFIG_BIT_MENU_OFF) ) return;
 
   checkForNeededLineUpdates();
-    
+
   // cursor update not yet implemented ;-(
   //if(bitRead(status,APT_MENU_STATUS_BIT_NEEDCURSORUPDATE)) APT_MENU_ADD_FULL_UPDATE();
     
@@ -225,6 +285,7 @@ void APT_Menu::loop() {
     bitClear(status, APT_MENU_STATUS_BIT_NEEDFULLUPDATE);
     bitClear(status, APT_MENU_STATUS_BIT_NEEDLINEUPDATE);
     bitClear(status, APT_MENU_STATUS_BIT_NEEDCURSORUPDATE);
+	// ToDo: if within menu update and updte would be made necessary? probably not ?
   } 
 
   return;
@@ -257,7 +318,7 @@ APT_MenuItem* APT_Menu::getNthSiblingOfCurrentLayer(const uint8_t n) {
 }
 
 uint8_t APT_Menu::getNumberOfEntriesOfCurrentLayer(void) {
-  return entryOfActiveLayer->getSibingsCount();
+  return entryOfActiveLayer->getNumberOfSibings();
 }
  
 void APT_Menu::goUp() {
@@ -320,30 +381,55 @@ void APT_Menu::goDown() {
 
 void APT_Menu::goInto() {
 
+  DEBUG_MSG_STR(F("APT: goInto()"));
+
   // no enter if item is activated already
   if ( bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED)) return;
 
   APT_MenuItem* entry = getNthSiblingOfCurrentLayer(cursorPosition + scrollPosition);
-
+  
   if ( entry != NULL) {
     // menu item with childs, go into
     if ( entry->hasChild() ) { 
-      entryOfActiveLayer = entry->getChild();
-      cursorPosition = 0;
-      scrollPosition = 0;
-      bitSet(status, APT_MENU_STATUS_BIT_NEEDFULLUPDATE );
+  	  DEBUG_MSG_STR(F("APT: goInto() - enter with child"));
+	
+	  //bitSet(status, APT_MENU_STATUS_BIT_NEEDFULLUPDATE );
+  	  //entry->doCallback(this, APT_CLB_ONENTER, cursorPosition);
+	  
+      // check if at least one is not hidden, 
+	  // if all are hidden, you cannot enter
+	  APT_MenuItem* childEntries = entry->getChild();
+	  while ( childEntries != NULL) {
+		if ( ! childEntries->isHidden() ) {
+		
+		    entryOfActiveLayer = entry->getChild();
+			cursorPosition = 0;
+			scrollPosition = 0;
+			APT_MENU_ADD_FULL_UPDATE();
+			entry->doCallback(this,APT_CLB_ONENTER, cursorPosition);
+			return;
+		}
+		childEntries = childEntries->getYoungerSibling();
+	  }
+	  // when reached here, no unhidden siblings present, so 
+	  // one cannot enter the sub menu
+  	  DEBUG_MSG_STR(F("APT: goInto() - no unhidden child"));
+	  return;
 
     // leaf menu item
-    } else {                  
+    } else {   
+   	  DEBUG_MSG_STR(F("APT: goInto() - activating MenuItem"));
+
       if( entry->doCallback(this,APT_CLB_ONENTER, cursorPosition) ) {
         bitSet(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED);
       } 
+
       // full update for full menu, else line update
       if( entry->doCallback(this, APT_CLB_ISFULLMENUITEM , cursorPosition) ) {
              APT_MENU_ADD_FULL_UPDATE();
       } else APT_MENU_ADD_LINE_UPDATE(cursorPosition);
 
-    }
+    } // if ( entry->hasChild() ) { } else {
   }
   // else ToDo: possible callback ? or not ? or assert ?
 }
@@ -352,6 +438,7 @@ void APT_Menu::goBack() {
 
   // if selected menu item, de-select menu item
   if ( bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) ) {
+	DEBUG_MSG_STR(F("APT: goBack in active Menu"));
 
     APT_MenuItem* entry = getActiveMenuItem();
     assert( entry != NULL);    
@@ -364,41 +451,323 @@ void APT_Menu::goBack() {
 
   // else go one level down
   } else {
-      APT_MenuItem* entry = entryOfActiveLayer->getParent();
-      if (entry != NULL) { // NULL if we are in root, so no back available
-        entryOfActiveLayer = getFirstOfSiblings(entry);
-        uint8_t n = getCountOfSibling(entry);
-        // ToDo: restore last scroll position
+      APT_MenuItem* parentEntry = entryOfActiveLayer->getParent();	  
+	  if (parentEntry != NULL) { // NULL if we are in root, so no back available
+		
+		// callback before going one level down
+		getCurrentMenuItem()->doCallback(this, APT_CLB_ONEXIT, cursorPosition);    
+        
+		// set the new layer and cursor/scroll positions
+		entryOfActiveLayer = parentEntry->getOldestSibling();
+		uint8_t n = parentEntry->getCountOfOlderSiblings(); // oldest 0
+		Serial.print("APT: N: "); Serial.println(n);
+		Serial.print("APT: display: "); Serial.println(displayLines);
         cursorPosition = min(n, displayLines - 1);
         scrollPosition = n - cursorPosition;
         bitSet(status, APT_MENU_STATUS_BIT_NEEDFULLUPDATE );
-        entry->doCallback(this, APT_CLB_ONEXIT, cursorPosition);    
-      } // if (entry != NULL) {
+
+		// ToDo: could also set last scroll position,
+		// current implementation scrolls from beginning 
+		// and does not save scroll position.
+		// Overhead probably to much since for each layer 
+		// would need to store scroll position
+		
+      } // if (entry != NULL) { } else {} do nothing
   }
   // else we are in root, ToDo possible add callback
 }
 
-
-void APT_Menu::gotoRoot() {
+void APT_MenuItem::hide() {
+	bitSet(config,APT_MENUITEM_CONFIG_HIDDEN);
 }
+
+void APT_MenuItem::show() {
+	bitClear(config,APT_MENUITEM_CONFIG_HIDDEN);
+}
+
+bool APT_MenuItem::isHidden() {
+    //DEBUG_MSG_STRVAL("MenuItem: ",config);
+	return bitRead(config,APT_MENUITEM_CONFIG_HIDDEN);
+}
+			
+void APT_Menu::gotoRoot() {
+	APT_MenuItem* entry = getCurrentMenuItem();
+	while( entry->hasParent() ) {
+		goBack();
+		entry = getCurrentMenuItem();
+	}
+};
+
+void APT_Menu::gotoFirstRoot(){	
+	gotoRoot();
+	APT_MenuItem* entry = getCurrentMenuItem();
+	while( entry->hasOlderSibling() ) {
+		goUp();
+		entry = getCurrentMenuItem();
+	}	
+}; 
+
+
+APT_MenuItem* APT_Menu::getMenuItem(APT_MenuItem* firstEntryOfRow, uint8_t id) {
+   while(firstEntryOfRow!= NULL) {
+	 if( firstEntryOfRow->getID() == id ) return firstEntryOfRow;
+	 if( firstEntryOfRow->hasChild() ) {
+		APT_MenuItem* foundMenuItem = getMenuItem(firstEntryOfRow->getChild(), id);
+		if( foundMenuItem != NULL) {
+		   DEBUG_MSG_STRVAL(F("APT: Did find: "),id);
+		   return foundMenuItem;
+		}
+	 }
+	 firstEntryOfRow = firstEntryOfRow->getYoungerSibling();
+   }
+   DEBUG_MSG_STRVAL(F("APT: id not found"),id);
+   return NULL;
+}
+
+APT_MenuItem* APT_Menu::getMenuItem(uint8_t id) {
+   return getMenuItem(firstEntry, id);;
+}
+
+
+#define APT_DONT_SEARCH_YOUNGER_SIBLING   	0
+#define APT_DONT_SEARCH_CHILD             	1
+#define APT_DONT_SEARCH_PARENT             	2
+#define APT_DONT_SEARCH_OLDER_SIBLING      	3
+
+#define APT_FOUND_ON_YOUNGER_SIBLING   		0
+#define APT_FOUND_ON_CHILD             		1
+#define APT_FOUND_ON_OLDER_SIBLING      	2
+#define APT_FOUND_ON_PARENT			      	3
+#define APT_NOT_FOUND				      	4
+#define APT_FOUND				      		5
+
+#define APT_WAS_FOUND(x)					( x != APT_NOT_FOUND )
+#define IS_BIT_SET(a,x) 					( (a&(1<<x)) == (1<<x) ) 
+#define ADD_BIT(a,x)    					( a | (1<<x))
+#define SET_BIT(x)       					(1<<x)
+
+
+uint8_t findID(APT_MenuItem* element, uint8_t ID, uint8_t config = 0) {
+	uint8_t found;
+	
+	// checkif we reached element
+	if( element->getID() == ID) {
+		DEBUG_MSG_STRVAL(F("APT: found element: "), element->getID() );
+		return APT_FOUND;
+	}		
+	
+	// check child
+	DEBUG_MSG_STRVAL(F("APT: Check child of "), element->getID() );
+	if( !IS_BIT_SET(config,APT_DONT_SEARCH_CHILD) && element->hasChild() ) {
+		DEBUG_MSG_STRVAL(F("APT: child is "), element->getChild()->getID() );
+		found = findID(element->getChild(), ID, SET_BIT(APT_DONT_SEARCH_PARENT));
+		if( APT_WAS_FOUND(found) ) {
+			DEBUG_MSG_STRVAL(F("APT: found at child of "), element->getID() );
+			return APT_FOUND_ON_CHILD;
+		}
+	}
+	
+	// check younger sibling	
+	DEBUG_MSG_STRVAL(F("APT: Check younger sibling of "), element->getID() );
+	if(  !IS_BIT_SET(config,APT_DONT_SEARCH_YOUNGER_SIBLING) && element->hasYoungerSibling() ) {
+		DEBUG_MSG_STRVAL(F("APT: younger sibling is "), element->getYoungerSibling()->getID() );
+		found = findID(element->getYoungerSibling(), ID, SET_BIT( APT_DONT_SEARCH_OLDER_SIBLING ) | SET_BIT( APT_DONT_SEARCH_PARENT ));
+		if( APT_WAS_FOUND(found) ) {
+			DEBUG_MSG_STRVAL(F("APT: found at younger sibling of "), element->getID() );
+			return APT_FOUND_ON_YOUNGER_SIBLING;
+		}	
+	}
+
+	// check older sibling	
+	DEBUG_MSG_STRVAL(F("APT: Check older sibling and parent of "), element->getID() );
+	if( !IS_BIT_SET(config,APT_DONT_SEARCH_OLDER_SIBLING) && element->hasOlderSibling() ) {
+		DEBUG_MSG_STRVAL(F("APT: older sibling is "), element->getOlderSibling()->getID() );
+		found = findID(element->getOlderSibling(), ID, SET_BIT( APT_DONT_SEARCH_YOUNGER_SIBLING ) | SET_BIT( APT_DONT_SEARCH_PARENT ));
+		if( APT_WAS_FOUND(found) ) {
+			DEBUG_MSG_STRVAL(F("APT: found at older sibling of "), element->getID() );
+			return APT_FOUND_ON_OLDER_SIBLING;
+		}	
+	// check predecessor (older sibling or parent)
+	} else if( !IS_BIT_SET(config,APT_DONT_SEARCH_PARENT) && element->hasParent() ) {
+		DEBUG_MSG_STRVAL(F("APT: parent is "), element->getParent()->getID() );
+		found = findID(element->getParent(), ID, SET_BIT( APT_DONT_SEARCH_CHILD ));
+		if( APT_WAS_FOUND(found) ) {
+			DEBUG_MSG_STRVAL(F("APT: found at parent of "), element->getID() );
+			return APT_FOUND_ON_PARENT;
+		}
+	} // else { } // we are at root and do not continue to search
+	
+	// not found
+	return APT_NOT_FOUND;
+}
+
+void APT_Menu::gotoMenuItem(APT_MenuItem *item,bool fastSearch) {
+	if(item == NULL) return;
+	gotoID(item->getID(),fastSearch);
+}
+    
+	
+void APT_Menu::gotoID(uint8_t ID, bool fastSearch) {
+  // check if ID is within siblings
+  
+  DEBUG_MSG_STRVAL("APT: Find ID",ID);
+  if(fastSearch) {
+	DEBUG_MSG_STRVAL("APT: Fast Search not yet implemented : ",ID);
+	return;
+  }
+  
+  while (1==1) {
+    //
+	APT_MenuItem* iterator = entryOfActiveLayer->getNthSibling(scrollPosition + cursorPosition); 
+	assert( iterator != NULL );
+	DEBUG_MSG_STR("--------------- ");
+	DEBUG_MSG_STRVAL("APT: Search from ",iterator->getID());
+	uint8_t dir = findID(iterator,ID);
+	DEBUG_MSG_STRVAL("APT: Found ",dir);
+  
+	switch( dir ) {
+		case APT_FOUND_ON_YOUNGER_SIBLING:  goDown(); DEBUG_MSG_STR("goDown()"); break;
+		case APT_FOUND_ON_CHILD:			goInto(); DEBUG_MSG_STR("goInto()");  break;        
+		case APT_FOUND_ON_OLDER_SIBLING:    goUp();   DEBUG_MSG_STR("goUp()"); break;
+		case APT_FOUND_ON_PARENT:			goBack(); DEBUG_MSG_STR("goBack()"); break;
+		case APT_FOUND:						DEBUG_MSG_STR("reached element"); return;
+		default: DEBUG_MSG_STRVAL("APT: element not found",dir); return;
+	} // switch( dir ) {
+	
+  } //  while (1==1)
+  
+} // void APT_Menu::gotoID(uint8_t ID) {
+
+APT_MenuItem* APT_MenuItem::getParent(void) {
+	APT_MenuItem* entry = this;
+	while ( entry->pre != NULL) {
+		if ( entry->pre->child == entry ) return entry->pre;
+		else entry = entry->pre; // set to older sibling and continue search
+	}
+	return NULL;
+}
+
+bool APT_MenuItem::hasParent(void) {
+	APT_MenuItem* entry = this;
+	while ( entry->pre != NULL) {
+		if ( entry->pre->child == entry ) return true;
+		else entry = entry->pre; // set to older sibling and continue search
+	}
+	return false; // root elements
+}
+
+
+bool APT_MenuItem::isOldestSibling()  { 
+	if ( ( pre == NULL) || (pre->child == this)) 	return true; 
+	else 											return false; 
+}; // bool APT_MenuItem::isOldestSibling()  { 
+
+APT_MenuItem* APT_MenuItem::getOldestSibling() {
+	APT_MenuItem* entry = this;
+	while( entry->pre != NULL) {
+		// loop until predecessors child of itself is itself (oldest sibling)
+		if ( (entry->pre->child == entry)) 	return entry; 
+		else								entry = entry->pre;
+
+	}	
+	// root has no predecessor, so return first element
+	return entry;
+} // APT_MenuItem* APT_MenuItem::getOldestSibling() { 
 
 uint8_t APT_Menu::getCountOfSibling(APT_MenuItem* entry) {
-  APT_MenuItem* iterator = getFirstOfSiblings(entry);
   uint8_t count = 0;
-  while ( iterator != entry) {
-    iterator = iterator->getSibling();
+  APT_MenuItem* iterator = entry->getOldestSibling();
+  while ( iterator->hasYoungerSibling() ) {
+    iterator = iterator->getYoungerSibling();
     count++;
   }
-  return count; // will never reach here
-  // ToDo: no exceptions like NULL pointer since this function itself cannot fail (hopefully ;-)
+  return count; 
+} // uint8_t APT_Menu::getCountOfSibling(APT_MenuItem* entry) {
+
+
+void APT_Menu::hide(uint8_t ID) {
+  hide( getMenuItem(ID) );
+} // void APT_Menu::hide(uint8_t ID) {
+void APT_Menu::show(uint8_t ID) {
+  show( getMenuItem(ID) );
+}
+bool APT_Menu::isHidden(uint8_t ID) {
+  APT_MenuItem* it = getMenuItem(ID);
+  if(it != NULL) return it->isHidden();
+  else return false;
 }
 
-APT_MenuItem* APT_Menu::getFirstOfSiblings(APT_MenuItem* sib) {
-  APT_MenuItem* parent = sib->getParent();
-  if ( parent == NULL) return firstEntry;
-  else                return parent->getChild();
-}
+void APT_Menu::hide(APT_MenuItem* menuItem) {
+   DEBUG_MSG_STRPTR("APT: hide ",menuItem);
+  
+   if(menuItem == NULL) return;
+   // check if in current menu row and befor cursor position
+   APT_MenuItem *iterator = entryOfActiveLayer;
+   uint8_t absCursorPosition = cursorPosition + scrollPosition;
+   
+   while( iterator->getID() != menuItem->getID() ) {
 
+    // not found before current cursor position, just hide it
+	if(absCursorPosition == 0) {
+		DEBUG_MSG_STR("element ot hide after this");
+		menuItem->hide(); 
+		forceUpdate();
+		// ToDo: check if in this menu, only then force update
+		return;
+	} else absCursorPosition--;
+	
+	// not found in current row and row is over,
+	// just hide it
+	if( ! iterator->hasYoungerSibling() )  {
+		DEBUG_MSG_STR("APT: no younger siblings");
+		menuItem->hide(); 
+		return;
+	} else iterator->getYoungerSibling();
+	
+   }
+   DEBUG_MSG_STRVAL("APT: found ID",menuItem->getID());
+   
+   // if current ID to be hidden and it is actived
+   if ( (absCursorPosition == 0) && bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) )  {
+      DEBUG_MSG_STR("APT: go out of active menu");
+	  goBack();
+   }
+   
+   // menu item to be hidden befor or at 
+   // cursor position, special handling needed
+   DEBUG_MSG_STR("APT: set cursor correctly");
+ 
+   if(cursorPosition >0) cursorPosition--;
+   else if (scrollPosition > 0) scrollPosition--;
+   else if (! iterator->hasYoungerSibling() ) {
+	if ( iterator->hasParent() ) goBack(); // last element on row hidden, go back
+	else return;  // do nothing, last element on 
+				  // first row cannot be hidden
+	
+   }
+
+   // now hide the menu item
+   menuItem->hide(); 
+   forceUpdate();
+   return;
+} // void APT_Menu::hide(APT_MenuItem* menuItem) {
+
+void APT_Menu::show(APT_MenuItem* menuItem) {
+  if(menuItem != NULL && menuItem->isHidden()) {
+	menuItem->show();
+	forceUpdate();
+  } 
+  return;
+}
+bool APT_Menu::isHidden(APT_MenuItem* menuItem) {
+  if(menuItem == NULL) return false;
+  else 				   return menuItem->isHidden();
+}	
+	
+
+/********************************************************************/
+/**                                                                **/
+/********************************************************************/
 void APT_Menu::clearMenu() {
  if (clearMenuFunction !=  NULL) (*this->clearMenuFunction)();
 }
@@ -409,12 +778,11 @@ void APT_Menu::clearLine(uint8_t line) {
 
 void APT_Menu::updateMenu() {
   APT_MenuItem* entry = entryOfActiveLayer;
-  APT_MenuItem* selectedItem = getNthSiblingOfCurrentLayer( scrollPosition + cursorPosition);
-
-  assert( selectedItem != NULL ); // should never happen
 
   // full screen menu item selected, show only this
   if ( bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) ) {
+    APT_MenuItem* selectedItem = getNthSiblingOfCurrentLayer( scrollPosition + cursorPosition);
+    assert( selectedItem != NULL ); // should never happen
     if ( selectedItem->isFullMenuItem(this) ) {
       if (this->clearMenuFunction != NULL) (*this->clearMenuFunction)();
       selectedItem->doCallback(this, APT_CLB_ONUPDATE_LINE | APT_CLB_SETACTIVEATED | APT_CLB_SETCURSORON,
@@ -433,41 +801,53 @@ void APT_Menu::updateMenu() {
         this->clearLineFunction != NULL) (*this->clearLineFunction)(selectedLine);
 
 
-  for (uint8_t i = 0; i < scrollPosition; i++) {
-    entry = entry->getSibling();
-    assert(entry!=NULL); // ToDo: any exception handling (should not happen)
+  uint8_t lineCount = 0;
+  while (lineCount < scrollPosition) {
+    entry = entry->getYoungerSibling();
+	if( ! entry->isHidden() ) lineCount++;
+    assert( entry!=NULL ); // ToDo: any exception handling (should not happen)
   }
 
   // display all lines
-  for (uint8_t i = 0; i < displayLines; i++) {
-    if (entry == NULL) break;
-    bool    updateThisLine  = bitRead(status,APT_MENU_STATUS_BIT_NEEDFULLUPDATE) ||
-                              ( bitRead(status,APT_MENU_STATUS_BIT_NEEDLINEUPDATE) && (i == selectedLine) );
-    uint8_t callbackType    = ( bitRead(status,APT_MENU_STATUS_BIT_NEEDCURSORUPDATE) ? APT_CLB_ONCURSORUPDATE : 
-                               (updateThisLine ? APT_CLB_ONUPDATE_LINE : APT_CLB_ONUPDATE_OTHERLINE ) );
-
-    // show content with menu item function
-    if ( entry->hasCallback() ) {
-      
-      if (i == cursorPosition) {
-        callbackType |= APT_CLB_SETCURSORON;
-        if (bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) ) callbackType |= APT_CLB_SETACTIVEATED;
-      }
-      entry->doCallback(this,callbackType, i);
-
-    // if MenuItem does not have a callback, used default show function
-    } else if (this->defaultShowEntryFunction != NULL) {
-      if (i == cursorPosition) {
-        callbackType |= APT_CLB_SETCURSORON;
-        if (bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) ) callbackType |= APT_CLB_SETACTIVEATED;
-      }
-      (*this->defaultShowEntryFunction) (this, entry, callbackType, i);
-    } else {
-      assert(false); // there should be at least one of both possibilities
-    }
+  lineCount = 0;
+  while( lineCount < displayLines) {
     
+	// no more entries, exit
+	if (entry == NULL) break;
+	
+	// just skip elements which are not shown
+	if( ! entry->isHidden() ) { 
+		bool    updateThisLine  = bitRead(status,APT_MENU_STATUS_BIT_NEEDFULLUPDATE) ||
+								 ( bitRead(status,APT_MENU_STATUS_BIT_NEEDLINEUPDATE) && (lineCount == selectedLine) );
+		uint8_t callbackType    = ( bitRead(status,APT_MENU_STATUS_BIT_NEEDCURSORUPDATE) ? APT_CLB_ONCURSORUPDATE : 
+								(updateThisLine ? APT_CLB_ONUPDATE_LINE : APT_CLB_ONUPDATE_OTHERLINE ) );
+								
+		// show content with menu item function
+		if ( entry->hasCallback() ) {
+
+			if (lineCount == cursorPosition) {
+				callbackType |= APT_CLB_SETCURSORON;
+				if (bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) ) callbackType |= APT_CLB_SETACTIVEATED;
+			}
+			entry->doCallback(this,callbackType, lineCount);
+			
+		// if MenuItem does not have a callback, used default show function
+		} else if (this->defaultShowEntryFunction != NULL) {
+			if (lineCount == cursorPosition) {
+				callbackType |= APT_CLB_SETCURSORON;
+				if (bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) ) callbackType |= APT_CLB_SETACTIVEATED;
+			}
+			(*this->defaultShowEntryFunction) (this, entry, callbackType, lineCount);
+		} else {
+			assert(false); // there should be at least one of both possibilities
+		}
+		
+		lineCount++;
+		
+    } // if( ! entry->isHidden() ) { 
+	
     // next entry
-    entry = entry->getSibling();
+    entry = entry->getYoungerSibling();
     
   } // for(uint8_t i=0; i<displayLines;i++) {
 
@@ -477,6 +857,12 @@ APT_MenuItem* APT_Menu::getCurrentMenuItem(void) {
     return getNthSiblingOfCurrentLayer( scrollPosition + cursorPosition );
 }
 
+uint8_t APT_Menu::getCurrentMenuItemID(void) {
+		return getCurrentMenuItem()->getID();
+}
+	
+    
+	
 APT_MenuItem* APT_Menu::getActiveMenuItem(void) {
   if (bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED) )  {
     return getCurrentMenuItem();
@@ -496,7 +882,7 @@ void APT_Menu::forceUpdate(APT_MenuItem* item) {
 
   // go to correct scroll position
   for (uint8_t i = 0; i < scrollPosition; i++) {
-    entry = entry->getSibling();
+    entry = entry->getYoungerSibling();
     assert(entry!=NULL); // ToDo: any exception handling (should not happen)
   }
 
@@ -506,11 +892,19 @@ void APT_Menu::forceUpdate(APT_MenuItem* item) {
     if (entry == NULL) return;
     if (item==entry ) { APT_MENU_ADD_LINE_UPDATE(i);  return;} 
   
-    entry = entry->getSibling();
+    entry = entry->getYoungerSibling();
   }
 }; // APT_Menu::forceUpdate(APT_MenuItem* item)
 
 
+APT_MenuItem* 	APT_Menu::getMenuItemInLine(uint8_t line) {
+	// ToDo: if line is after last elements !! 
+	return getNthSiblingOfCurrentLayer( scrollPosition + line );
+}
+
+uint8_t APT_Menu::getMenuItemIDInLine(uint8_t line){
+	return getMenuItemInLine(line)->getID();
+}
 
 
 
@@ -590,13 +984,18 @@ bool APT_Menu::isAMenuItemActivated(void) {
 /* APT_MenuItem class                                                      */
 /***************************************************************************/
 
-APT_MenuItem::APT_MenuItem(uint8_t id, const char * contentPointer ) {
-  this->id = id;
-  this->contentPointer = contentPointer;
+APT_MenuItem::APT_MenuItem()
+ : id(0), contentPointer(NULL) {
+}
+
+APT_MenuItem::APT_MenuItem(const uint8_t id, const char * const contentPointer) 
+ : id(id), contentPointer(contentPointer) {
+  //Serial.begin(115200);
+  //APT_DEBUG_STRVAL(F("APT: creating ID:"),id);  
 };
 
-APT_MenuItem::APT_MenuItem( uint8_t id,
-                            const char * contentPointer,
+APT_MenuItem::APT_MenuItem( const uint8_t id,
+                            const char * const contentPointer,
                             clbFunctionType clbFunction )
   : APT_MenuItem(id, contentPointer) {
   setCallback(clbFunction);
@@ -611,52 +1010,96 @@ void APT_MenuItem::setSibling(APT_MenuItem* sibling) {
   this->sibling = sibling;
 };
 
-void APT_MenuItem::addSibling(APT_MenuItem* sibling) {
-  if ( this == sibling) {
-    // ToDo: Handling? --> do nothing, onself cannot be a sibling :-)
-  } else if (this->sibling == NULL) {
-    this->setSibling(sibling);
-  } else {
-    // look for the next free sibling space
-    APT_MenuItem* tmp = this->sibling;
-    do {
-      if ( tmp->hasSibling() ) tmp = tmp->getSibling();
-      else {
-        tmp->setSibling(sibling);
-        return;
-      }
-    } while (1 == 1);
-  }
-}
+bool APT_MenuItem::hasYoungerSibling() { 
+	return sibling != NULL; 
+}; 
+APT_MenuItem*  APT_MenuItem::getYoungerSibling() { 
+	return sibling; 
+};
 
-uint8_t APT_MenuItem::getSibingsCount(void) {
-  uint8_t siblingsCount = 1;
+bool APT_MenuItem::hasOlderSibling() { 
+	if( pre == NULL) return false; // root element
+	if( pre->getChild() == this ) return false; // oldest sibling
+	return true;
+}; 
+
+APT_MenuItem* APT_MenuItem::getOlderSibling() { 
+	if( pre == NULL) return NULL; // root element
+	if( pre->getChild() == this ) return NULL; // oldest sibling
+	return pre;
+};
+
+void APT_MenuItem::addSibling(APT_MenuItem* sibling) {
+  // onself cannot be a sibling :-)
+  // NULL cannot be added
+  if ( this == sibling ||sibling == NULL) return;
+  
+  // look for the next free sibling space
+  APT_MenuItem* iterator = this;
+  while ( iterator->sibling != NULL) {
+	iterator = iterator->sibling;
+  }
+  // now add sibling
+  iterator->sibling = sibling;
+  sibling->pre = this;
+} // void APT_MenuItem::addSibling(APT_MenuItem* sibling) {
+
+uint8_t APT_MenuItem::getCountOfOlderSiblings(void) {
+  uint8_t siblingsCount = 0;
+  
+  // count younger siblings
   APT_MenuItem* entry = this;
-  while ( entry->hasSibling() ) {
-    entry = entry->getSibling();
+  while ( entry->hasOlderSibling() ) {
+    entry = entry->getOlderSibling();
     siblingsCount++;
   }
+  
+  return siblingsCount;
+} // uint8_t APT_MenuItem::getCountOfOlderSiblings(void) {   
+    
+	
+uint8_t APT_MenuItem::getNumberOfSibings(void) {
+  uint8_t siblingsCount = 0;
+  if( ! this->isHidden() ) siblingsCount++;
+  
+  // count younger siblings
+  APT_MenuItem* entry = this;
+  while ( entry->hasYoungerSibling() ) {
+    entry = entry->getYoungerSibling();
+    if( ! entry->isHidden() ) siblingsCount++;
+  }
+  // count older siblings
+  entry = this;
+  while ( entry->hasOlderSibling() ) {
+    entry = entry->getOlderSibling();
+    if( ! entry->isHidden() ) siblingsCount++;
+  }
+  
   return siblingsCount;
 }
 
 APT_MenuItem* APT_MenuItem::getNthSibling(const uint8_t n) {
-  APT_MenuItem* entry = this;
-  for (uint8_t i = 0; i < n; i++) {
-    entry = entry->getSibling();
-    if ( entry == NULL) return NULL;
+  APT_MenuItem* entry = getOldestSibling();
+  uint8_t countMenuEntry = 0;
+  while (countMenuEntry < n || entry->isHidden() ) {
+    if ( entry == NULL ) break;
+	if( ! entry->isHidden() ) countMenuEntry++;
+    entry = entry->getYoungerSibling();
   }
   return entry;
 }
 
 void APT_MenuItem::addChild(APT_MenuItem* child) {
-  if ( this == child) {
-    // ToDo: Handling? --> do nothing, onself cannot be a child :-)
-  } else if (this->child == NULL) {
+
+  if ( this == child || child == NULL)  return;
+    // onself cannot be a child :-)
+	// NULL cannot be added as child
+	
+  if (this->child == NULL) {
     this->child = child;
-    child->setParent(this);
+    child->pre = this;
   } else {
     this->child->addSibling(child);
-    child->setParent(this);
   }
 };
 

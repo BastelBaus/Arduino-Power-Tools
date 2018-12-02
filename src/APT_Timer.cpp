@@ -36,14 +36,25 @@ APT_Timer::APT_Timer(unsigned long duration_ms) {
   setDuration(duration_ms);
 }
 
-void APT_Timer::setDuration(unsigned long duration_ms) {
+void APT_Timer::setDuration(uint32_t  duration_ms) {
   stop();
   this->timerDuration_ms = duration_ms;
 }
 
-unsigned long APT_Timer::getDuration() {
+uint32_t  APT_Timer::getDuration() {
  return timerDuration_ms;
 }
+
+APT_Timer::APT_Timer(unsigned long duration_ms, timerCallbackFunctionType timerCallbackFunction) : 
+	APT_Timer(duration_ms) 	{
+	setCallback(timerCallbackFunction);
+}
+
+APT_Timer::APT_Timer(unsigned long duration_ms, timerCallbackFunctionType timerCallbackFunction, uint16_t repititions) 
+	: APT_Timer(duration_ms, timerCallbackFunction) {
+	start(repititions);
+}
+   
    
 void APT_Timer::start(uint16_t repititions) {
   this->repititions = repititions;
@@ -51,7 +62,7 @@ void APT_Timer::start(uint16_t repititions) {
 }
 
 void APT_Timer::stop(void) {
-  
+  startTime_ms = TIMER_STOP_VALUE;
 }
 
 bool APT_Timer::isOver() {
@@ -72,7 +83,7 @@ void APT_Timer::loop(void) {
 		if (repititions == 1)  startTime_ms = TIMER_STOP_VALUE; // stop the timer
 		else {
 			startTime_ms = timeStamp - ((timeStamp - startTime_ms ) - timerDuration_ms);
-			if(repititions>1)  repititions--;
+			if(repititions != APT_TIMER_REPEAT_FOREVER)  repititions--;
 			// else // (repititions == APT_TIMER_REPEAT_FOREVER) ; // #define APT_TIMER_REPEAT_FOREVER  0   
 		}
     }  

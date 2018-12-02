@@ -46,10 +46,18 @@ class APT_Timer {
    APT_Timer(void);
    APT_Timer(unsigned long duration_ms);
    
+   //set teh callback function
+   APT_Timer(unsigned long duration_ms, timerCallbackFunctionType timerCallbackFunction);   
+   // starts automatically the timer
+   APT_Timer(unsigned long duration_ms, timerCallbackFunctionType timerCallbackFunction, uint16_t repititions);
+   
    // Sets the duration of the timer. If timer is running 
    // or paused, timer will be reseted and set to stop. No 
    // callback will be called. 
-   void setDuration(unsigned long duration_ms);
+   void     setDuration(uint32_t duration_ms);
+   
+   // returns the currently set duration 
+   uint32_t  getDuration(void);
   
    
    // Starts the timer time. If it is alread running, 
@@ -78,8 +86,7 @@ class APT_Timer {
    // returns the remaining time in miliseconds
    uint32_t  getRemainingTime();
    
-   // returns the currently set duration 
-   uint32_t  getDuration(void);
+
    
    uint16_t  getRemainingRepititions(void);
 
