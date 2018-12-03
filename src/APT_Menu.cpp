@@ -321,7 +321,23 @@ uint8_t APT_Menu::getNumberOfEntriesOfCurrentLayer(void) {
   return entryOfActiveLayer->getNumberOfSibings();
 }
  
-void APT_Menu::goUp() {
+ 
+void APT_MenuItem::setSelectable() {
+	bitClear(config,APT_MENUITEM_CONFIG_NOTSELECTABLE);
+}
+void APT_MenuItem::setNotSelectable() {
+	bitSet(config,APT_MENUITEM_CONFIG_NOTSELECTABLE);
+}
+bool APT_MenuItem::isSelectable() {
+  return !bitRead(config,APT_MENUITEM_CONFIG_NOTSELECTABLE);
+}
+
+// Hide ==> scrol correctly
+
+void APT_Menu::goUp()   { goUpDown(true); }
+void APT_Menu::goDown() { goUpDown(false); }
+
+void APT_Menu::goUpDown(const bool up) {
   uint8_t entries = getNumberOfEntriesOfCurrentLayer();
 
   // no scroll if only one entry
@@ -329,55 +345,40 @@ void APT_Menu::goUp() {
   // no scroll if inside a menu item
   if ( bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED)) return;
 
-  // first menu item in layer
-  if ( (cursorPosition + scrollPosition) == 0 ) {
-    if ( bitRead(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND) ) {
-      // wrap around
-      cursorPosition = min(displayLines, entries) - 1;
-      scrollPosition = (entries - cursorPosition) - 1;
-      APT_MENU_ADD_FULL_UPDATE();
-    } else return; // do nothing and no update of menu is needed
+  // save old psositions
+  uint8_t absPosition = cursorPosition + scrollPosition;
+  uint8_t sPos = scrollPosition, cPos = cursorPosition, oAbs = absPosition;
 
-  // first cursor position 
-  } else if ( cursorPosition == 0 ) {
-    scrollPosition--;
-    APT_MENU_ADD_FULL_UPDATE();
-  } else {
-    cursorPosition--;
-    APT_MENU_ADD_CURSOR_UPDATE();
-  }
-
-  // update the menu
+  do { // loop forever until break statements
+    
+	// did not rach any slectable position, return unchanged
+	if(absPosition + (up?-1:1) == oAbs) break; // do nothing and no update of menu is needed
+	
+	// reached end
+	if( absPosition == (up?0:entries-1)  ) {
+      if ( bitRead(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND) ) {
+        // wrap around
+	    cursorPosition = (up ?  min(displayLines, entries) - 1 : 0);
+        scrollPosition = (up ? (entries - cursorPosition) - 1  : 0);
+      } else break; // do nothing and no update of menu is needed
+    } else if ( cursorPosition == (up?0:displayLines-1) ) {
+	 		scrollPosition+= (up?-1:1);
+    } else 	cursorPosition+= (up?-1:1);
   
+    // next absolute position
+	absPosition = cursorPosition + scrollPosition;
+    if( entryOfActiveLayer->getNthSibling( absPosition )->isSelectable() ) {
+		if( scrollPosition == sPos) APT_MENU_ADD_CURSOR_UPDATE();
+		else						APT_MENU_ADD_FULL_UPDATE();
+		return;
+	}
+	 
+  }  while( 1==1);
+  
+  scrollPosition = sPos;
+  cursorPosition = cPos; 
 }
 
-void APT_Menu::goDown() {
-  uint8_t entries = getNumberOfEntriesOfCurrentLayer();
-
-  // no scroll if only one entry
-  if (entries == 1) return;
-  // no scroll if inside a menu item
-  if ( bitRead(status, APT_MENU_STATUS_BIT_MENUITEMSELECTED)) return;
-
-  // last menu item in layer
-  if ( (cursorPosition + scrollPosition) == (entries - 1) ) {
-    if ( bitRead(configuration, APT_MENU_CONFIG_BIT_SCROLL_WRAPAROUND) ) {
-      // wrap around
-      cursorPosition = 0;
-      scrollPosition = 0;
-      APT_MENU_ADD_FULL_UPDATE();
-    } else return; // do nothing and no update of menu is needed
-
-  // last cursor position
-  } else if ( cursorPosition == (displayLines - 1) ) {
-    scrollPosition++;
-    APT_MENU_ADD_FULL_UPDATE();
-  } else {
-    cursorPosition++;
-    APT_MENU_ADD_CURSOR_UPDATE();
-  }
-
-}
 
 void APT_Menu::goInto() {
 
@@ -700,7 +701,8 @@ bool APT_Menu::isHidden(uint8_t ID) {
 void APT_Menu::hide(APT_MenuItem* menuItem) {
    DEBUG_MSG_STRPTR("APT: hide ",menuItem);
   
-   if(menuItem == NULL) return;
+   if( menuItem == NULL ) return;
+   if( menuItem->isHidden() ) return;
    // check if in current menu row and befor cursor position
    APT_MenuItem *iterator = entryOfActiveLayer;
    uint8_t absCursorPosition = cursorPosition + scrollPosition;
@@ -709,11 +711,20 @@ void APT_Menu::hide(APT_MenuItem* menuItem) {
 
     // not found before current cursor position, just hide it
 	if(absCursorPosition == 0) {
-		DEBUG_MSG_STR("element ot hide after this");
-		menuItem->hide(); 
-		forceUpdate();
-		// ToDo: check if in this menu, only then force update
-		return;
+		DEBUG_MSG_STR("APT: hide element after this");
+		menuItem->hide();
+		while(iterator != NULL) {
+			if( iterator->getID() == menuItem->getID()) {
+				forceUpdate(); // only update if in this menu layer (ToDo: possible optimize, only if shown
+				// correct cursor if hidden element is at end of menu
+				uint8_t entries = getNumberOfEntriesOfCurrentLayer();
+				if( scrollPosition>0 && (scrollPosition + displayLines) <= entries+1 ) { scrollPosition--; cursorPosition++; }
+				// toDo: above does not work if element is not selectable, can we use go up ?
+				return; // return and update
+			}
+			iterator = iterator->getYoungerSibling();
+		}
+		return; // no update needed
 	} else absCursorPosition--;
 	
 	// not found in current row and row is over,
@@ -755,6 +766,7 @@ void APT_Menu::hide(APT_MenuItem* menuItem) {
 void APT_Menu::show(APT_MenuItem* menuItem) {
   if(menuItem != NULL && menuItem->isHidden()) {
 	menuItem->show();
+	// ToDo: go up if menu item is befor the current entry !
 	forceUpdate();
   } 
   return;

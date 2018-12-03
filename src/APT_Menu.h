@@ -35,7 +35,6 @@
 
 // todo: 
 // Prio 1
-// - functionality hide 
 // - implement wrap around unequal to jump around :-)
 // - scroll to end of menu, call function or give info to allow beep or other
 // - set default confguration and document
@@ -53,7 +52,8 @@
 // - dynamically added and delteded menu Items
 // DoNeed Updte --> Callback "loop"
 // Full Menu Item by config and not by callback ?? or alternative: hiffen by callback (no gut idea due to dynamics !)
-
+// ToDo: move typedef into classes
+// if lower level all siblings are hidden, how to go back in menu
 
 #include <Arduino.h>
 
@@ -158,18 +158,14 @@ class APT_MenuItem; // the class for each menu item
 // ToDo, make this shorter and combine it to one
 
 #define APT_MENUITEM_ADDLEAF(id,parent,content,clbFunction) \
-        const char APT_MENUITEM_ENRY ## id [] PROGMEM = { content }; \
-        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENRY ## id), clbFunction); \
+        const char APT_MENUITEM_ENTRY ## id [] PROGMEM = { content }; \
+        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENTRY ## id), clbFunction); \
         inline void APT_MENU_ADDCHILD_ ## id ## _func() { if (id!=1) { (parent==0 ? \
                 APT_menuItem_1_class.addSibling(& APT_menuItem_ ## id ## _class ) : \
                 APT_menuItem_ ## parent ## _class.addChild(& APT_menuItem_ ## id ## _class ) ); } }; 
 
-#define APT_MENUITEM_ADD(id,parent,content) \
-        const char APT_MENUITEM_ENRY ## id [] PROGMEM = { content }; \
-        APT_MenuItem APT_menuItem_ ## id ## _class(id, (char* )(&APT_MENUITEM_ENRY ## id)); \
-        inline void APT_MENU_ADDCHILD_ ## id ## _func() { if (id!=1) { (parent==0 ? \
-                APT_menuItem_1_class.addSibling(& APT_menuItem_ ## id ## _class ) : \
-                APT_menuItem_ ## parent ## _class.addChild(& APT_menuItem_ ## id ## _class ) ); } }; 
+#define APT_MENUITEM_ADD(id,parent,content) APT_MENUITEM_ADDLEAF(id,parent,content,NULL)
+
 
 
 //get pointer to ID, does not work with variables
@@ -275,7 +271,7 @@ class APT_MenuItem {
     APT_MenuItem(const uint8_t id, const char * const contentPointer, clbFunctionType clbFunction );
 
     // returns the ID of the MenuItem
-    uint8_t 		getID() { return id; };
+    inline uint8_t 		getID() { return id; };
 		
     // Copies the content to be shown in the MenuItem to the contentBuffer.
     // ContentBuffer must have sufficient memory allocated to hold the full 
@@ -343,6 +339,12 @@ class APT_MenuItem {
                             const uint8_t line);  
     
 	
+	// A non selectable item is scipped when scrolling through
+	// the menu.
+	void setSelectable();
+	void setNotSelectable();
+	bool isSelectable();
+	
   	// configure each menu item to be hidden or shown
 	// protected since it can only be accessed from APT_Menu
 	// which has to handle the cursor and scroll position
@@ -381,7 +383,9 @@ class APT_MenuItem {
     const char * const  contentPointer;         // pointer to menu entry to be shown
     clbFunctionType     clbFunction = NULL; 	// stores the callback function
 	uint8_t				config;					// configuration parameters of each menu entry
-	#define  APT_MENUITEM_CONFIG_HIDDEN       0
+	#define  APT_MENUITEM_CONFIG_FULLMENUITEM    0
+	#define  APT_MENUITEM_CONFIG_HIDDEN          1 // hide menu item. 
+	#define  APT_MENUITEM_CONFIG_NOTSELECTABLE   2
    
 }; // class APT_MenuItem 
 
@@ -443,6 +447,7 @@ class APT_Menu {
 	//
     bool isAMenuItemActivated(void);
 
+	
 
     // Turn off or on the menu. By turing off, you can choose
     // if the screen is cleared (by default on). Turing on will
@@ -516,6 +521,7 @@ class APT_Menu {
     APT_MenuItem* entryOfActiveLayer = NULL;  // first entry of current layer
 
 	APT_MenuItem* getMenuItem(APT_MenuItem* firstEntryOfRow, uint8_t id);
+	void goUpDown(const bool up);
 	
     // The three function pointers which could be used to customize 
     // the menu behavior

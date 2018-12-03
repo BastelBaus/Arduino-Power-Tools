@@ -20,8 +20,8 @@ bool MENU_GOTO_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callb
 bool MENU_HIDE_callback(APT_Menu* menu, APT_MenuItem* entry, const uint8_t callbackType, const uint8_t line) {
   if ( APT_CLB_GETCONDITION(callbackType) == APT_CLB_ONENTER) {
     switch( entry->getID() ) {
-      case 13:  menu->hide(entry); break;
-      case 14: if ( APT_CLB_GETCONDITION(callbackType) == APT_CLB_ONENTER) menu->show( APT_MENUITEM_POINTER(13) ); break;
+      case 14:  menu->hide(entry); break;
+      case 15: if ( APT_CLB_GETCONDITION(callbackType) == APT_CLB_ONENTER) menu->show( APT_MENUITEM_POINTER(14) ); break;
     }
   } // if ( APT_CLB_GETCONDITION(callbackType) == APT_CLB_ONENTER) {
     

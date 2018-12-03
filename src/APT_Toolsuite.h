@@ -22,8 +22,24 @@
 /***************************************************************************/
 
 
+
+
 #ifndef __APT_TOLSUITE_H__
 #define __APT_TOLSUITE_H__
+
+/***************************************************************************/
+/* Naming conventions for APT libraries                                    */
+/* - All classes start with APT_ followed by a name in capital letters.    */
+/*   Name of classes are not seperatede Each new word starts with a        */ 
+/*   capital letter. Example: APT_MenuItem                                 */
+/* - All instances of a class don't have the prefix APT and start with     */
+/*   a small letter. Each new word starts with a capital letter.           */
+/*   Example: menuItem                                 					   */
+/* - All defines start wioth the prefix APT_ followed by words only in     */
+/*   capital letters. Each word is seperated by an underscore              */
+/*                                                                         */
+/*                                                                         */
+/***************************************************************************/
 
 #include <APT_Menu.h>
 #include <APT_Timer.h>

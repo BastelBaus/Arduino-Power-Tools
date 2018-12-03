@@ -95,14 +95,15 @@ APT_MENUITEM_ADD     ( 4,  3,"Menu 2.1.1");                           // -"-
 APT_MENUITEM_ADD     ( 5,  4,"Menu 2.1.1.1");                         // -"-
 APT_MENUITEM_ADD     ( 6,  2,"Menu 2.2");                             // -"-
 APT_MENUITEM_ADD     (12,  6,"Menu 2.2.1");                           // -"-
-APT_MENUITEM_ADDLEAF (13,  2,"Menu 2.3 (hide)",   MENU_HIDE_callback);                         // -"-
-APT_MENUITEM_ADDLEAF (14,  2,"Menu 2.4 (unhide)", MENU_HIDE_callback);                         // -"-
+APT_MENUITEM_ADD     (13,  2,"Menu 2.3 !select");                             // -"-
+APT_MENUITEM_ADDLEAF (14,  2,"Menu 2.4 (hide)",   MENU_HIDE_callback);                         // -"-
+APT_MENUITEM_ADDLEAF (15,  2,"Menu 2.5 (unhide)", MENU_HIDE_callback);                         // -"-
 APT_MENUITEM_ADDLEAF ( 7,  5,"Goto Menu 2.1",     MENU_GOTO_callback);      // Jump to Menu 2.1
 APT_MENUITEM_ADDLEAF ( 8,  0,"Menu 3 (full)",     MENU3_callback);      // A full menu showing some text.
 APT_MENUITEM_ADDLEAF ( 9,  0,"Menu 4 (bool):",    MENU4_callback);      // A menu wich toggles a value on enter.
 APT_MENUITEM_ADDLEAF (10,  0,"Menu 5 (value):",   MENU5_callback);      // A menu with adjustable value.
 APT_MENUITEM_ADDLEAF (11,  0,"Menu 6 (auto):",    MENU6_callback);      // A menu with automatic updated value.
-#define APT_MENU_COUNT 14       // Number of menu entries
+#define APT_MENU_COUNT 15       // Number of menu entries
 
 
 //***********************************************************//
@@ -148,7 +149,7 @@ void setup() {
   APT_MENU_SETUP(menu, APT_MENU_COUNT);
   // Configure menu, jump back to first line when end is reached
   menu.setWrapAround(false);   
-
+  APT_MENUITEM_POINTER(13)->setNotSelectable();
 
 #if   defined(APT_DEFAULT_LCD_MENU_HANDLING_ROUTINES)
   // Initialization example for an LCD menu with encoder
